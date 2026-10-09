@@ -1,0 +1,1149 @@
+/**
+ * ==========================================================
+ *  API DE PRESUPUESTOS · Juan Carlos Romero F.P.
+ *  Este script vive en Google Sheets y responde a index.html
+ *  (alojado en GitHub + Vercel) mediante fetch().
+ * ==========================================================
+ *
+ *  PUBLICAR:  Implementar > Nueva implementación > Aplicación web
+ *             · Ejecutar como: Yo
+ *             · Quién tiene acceso: Cualquier persona
+ *  Copia la URL que termina en /exec y pégala en index.html (API_URL).
+ */
+
+const CONFIG = {
+  HOJA_PRESUPUESTO: 'PRESUPUESTOS',   // <-- nombre EXACTO de la pestaña con el membrete
+  HOJA_HISTORIAL: 'Historial',
+  HOJA_CLIENTES: 'Base_Clientes',
+  CLAVE_ACCESO: '123456%', // <-- la clave que pedirá la app al entrar
+
+  // --- CORREO ---
+  // Dirección desde la que salen los presupuestos. Debe ser la cuenta dueña de este
+  // script, o un alias configurado en Gmail > Configuración > Cuentas > "Enviar como".
+  CORREO_REMITENTE: 'alexanderguerrab@gmail.com',
+  NOMBRE_REMITENTE: 'Juan Carlos Romero F.P.',
+  COPIA_OCULTA: '',                  // opcional: recibir una copia de cada envío (ej. el mismo correo)
+
+  // --- DISEÑO DE LA PLANTILLA (hoja tamaño carta, columnas A:D) ---
+  //  Filas 1-5 : membrete / logo (no se toca)
+  //  Fila 7    : "PRESUPUESTO 0000X"
+  //  Fila 9    : DESCRIPCION | CANTIDAD | PRECIO UNITARIO | SUBTOTAL
+  //  Filas 10-45: artículos (hasta 36)
+  //  Filas 48-53: DATOS DEL CLIENTE + RESUMEN (ancladas)
+  //  Filas 54-55: dirección y teléfonos (anclados)
+  //  (El sello digital ya NO lo pone el script: va fijo en la plantilla, sobre las filas 49-53)
+  FILA_LIMPIEZA: 6,                  // desde esta fila hacia abajo se reescribe todo
+  FILA_TITULO: 7,
+  FILA_ENCABEZADO: 9,
+  FILA_ITEMS: 10,                    // primera fila de artículos
+  FILA_RESUMEN: 48,                  // fila del recuadro verde/amarillo (anclada)
+  FILAS_LIBRES: 2,                   // filas en blanco mínimas entre el último artículo y el recuadro
+  DIRECCION: 'Calle nueva, casa 8-56, sector Ciudad Carton, Porlamar.',
+  TELEFONOS: 'Telefonos:  (0295) 274.02.85  /  58 (0416) 399.00.52  /  58 (0414) 786.98.58',
+  COLOR_AZUL: '#0000ff',
+
+  // --- PAGINACIÓN (solo se usa con más de 36 artículos) ---
+  // El PDF se exporta "ajustado al ancho" de la hoja carta con márgenes de 0.4". Con eso el alto de
+  // cada página en la hoja es: ancho de A:D × (ALTO / ANCHO). Si el PDF sale con la tabla partida en
+  // un lugar raro, ajusta PAGINA_MARGEN (más grande = deja más aire al final de cada página).
+  PAGINA_ANCHO_IN: 7.7,              // 8.5" - 2 × 0.4" de margen
+  PAGINA_ALTO_IN: 10.2,              // 11"  - 2 × 0.4" de margen
+  PAGINA_MARGEN: 0.04,               // 4% de la página como holgura de seguridad
+
+  VERDE: '#00ff00',
+  AMARILLO: '#ffff00',
+  FMT_USD: '"$"#,##0.00',
+  FMT_BS: '"Bs"#,##0.00'
+};
+
+// ---------------------------------------------------------------
+//  ENTRADA DE LA API
+// ---------------------------------------------------------------
+function doGet() {
+  return json_({ ok: true, mensaje: 'API de presupuestos activa' });
+}
+
+function doPost(e) {
+  try {
+    const p = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+
+    // Recuperar clave: va ANTES de validar, porque quien la olvidó no puede enviarla
+    if (p.accion === 'recuperarClave') return json_({ ok: true, data: recuperarClave_() });
+
+    if (p.clave !== CONFIG.CLAVE_ACCESO) return json_({ ok: false, error: 'CLAVE_INVALIDA' });
+
+    const acciones = {
+      arranque:          () => obtenerDatosDeArranque(),
+      generarPdf:        () => generarPdf(p.datos),
+      enviarCorreo:      () => enviarPresupuestoPorCorreo(p.datos, p.correo),
+      guardar:           () => guardarEnHistorial(p.datos),
+      historial:         () => obtenerHistorial(),
+      detalle:           () => obtenerDetalle(p.numero),
+      reimprimir:        () => reimprimirPresupuesto(p.numero),
+      clientes:          () => obtenerClientes(),
+      guardarCliente:    () => guardarClienteBD(p.cliente),
+      actualizarCliente: () => actualizarCliente(p.fila, p.valores),
+
+      // --- Finanzas ---
+      finanzasDatos:     () => finanzasDatos(),
+      guardarIngreso:    () => guardarIngreso(p.registro),
+      guardarGasto:      () => guardarGasto(p.registro),
+      guardarPorCobrar:  () => guardarPorCobrar(p.registro),
+      cobrarPorCobrar:   () => cobrarPorCobrar(p.id, p.metodo),
+      // --- Proveedores ---
+      proveedoresDatos:     () => proveedoresDatos(),
+      guardarProveedor:     () => guardarProveedor(p.registro),
+      actualizarProveedor:  () => actualizarProveedor(p.id, p.valores),
+      eliminarProveedor:    () => eliminarProveedor(p.id),
+
+      guardarPorPagar:   () => guardarPorPagar(p.registro),
+      pagarPorPagar:     () => pagarPorPagar(p.id, p.metodo),
+      eliminarFinanza:   () => eliminarFinanza(p.tipo, p.id),
+
+      // --- Herramientas ---
+      herramientasDatos:     () => herramientasDatos(),
+      guardarHerramienta:    () => guardarHerramienta(p.registro),
+      actualizarHerramienta: () => actualizarHerramienta(p.id, p.valores),
+      eliminarHerramienta:   () => eliminarHerramienta(p.id),
+      prestarHerramienta:    () => prestarHerramienta(p.registro),
+      devolverHerramienta:   () => devolverHerramienta(p.id)
+    };
+
+    const fn = acciones[p.accion];
+    if (!fn) throw new Error('Acción desconocida: ' + p.accion);
+    return json_({ ok: true, data: fn() });
+  } catch (err) {
+    return json_({ ok: false, error: err.message });
+  }
+}
+
+function json_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// ---------------------------------------------------------------
+//  UTILIDADES
+// ---------------------------------------------------------------
+function ss_() { return SpreadsheetApp.getActiveSpreadsheet(); }
+
+function hojaPresupuesto_() {
+  const ss = ss_();
+  const hoja = ss.getSheetByName(CONFIG.HOJA_PRESUPUESTO);
+  if (hoja) return hoja;
+  // Respaldo: la primera pestaña que no sea Historial ni Base_Clientes
+  const excluidas = [CONFIG.HOJA_HISTORIAL, CONFIG.HOJA_CLIENTES].concat(Object.keys(ESQUEMAS).map(k => ESQUEMAS[k].hoja));
+  const otra = ss.getSheets().find(h => excluidas.indexOf(h.getName()) === -1);
+  if (!otra) throw new Error('No encuentro la hoja del presupuesto. Revisa CONFIG.HOJA_PRESUPUESTO.');
+  return otra;
+}
+
+function conBloqueo_(fn) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000); // evita que dos presupuestos se escriban a la vez en la hoja
+  try { return fn(); } finally { lock.releaseLock(); }
+}
+
+function numeroEntero_(valor) {
+  return parseInt(String(valor).replace(/\D/g, ''), 10) || 0;
+}
+
+function formatearNumero_(valor) {
+  const n = numeroEntero_(valor) || 1;
+  return ('00000' + n).slice(-5);
+}
+
+function redondear_(n) { return Math.round(n * 100) / 100; }
+
+function normalizarDatos_(d) {
+  if (!d) throw new Error('No llegaron datos del presupuesto.');
+  const items = (d.items || [])
+    .map(it => ({ desc: String(it.desc || '').trim(), cant: Number(it.cant) || 0, precio: Number(it.precio) || 0 }))
+    .filter(it => it.desc);
+  if (!items.length) throw new Error('El presupuesto no tiene artículos.');
+  return {
+    numero: formatearNumero_(d.numero),
+    cliente: String(d.cliente || '').trim(),
+    telefono: String(d.telefono || '').trim(),
+    correo: String(d.correo || '').trim(),
+    fecha: String(d.fecha || '').trim(),
+    vigencia: Number(d.vigencia) || 0,
+    tasa: Number(d.tasa) || 0,
+    iva: Number(d.iva) || 0,
+    nota: String(d.nota || '').trim(),               // opcional: si viene vacía no se imprime
+    observacion: String(d.observacion || '').trim(), // opcional: si viene vacía no se imprime
+    items: items
+  };
+}
+
+function calcularTotales_(d) {
+  const sub = d.items.reduce((s, it) => s + it.cant * it.precio, 0);
+  const iva = sub * d.iva / 100;
+  const total = sub + iva;
+  return { sub: redondear_(sub), iva: redondear_(iva), total: redondear_(total), totalBs: redondear_(total * d.tasa) };
+}
+
+// ---------------------------------------------------------------
+//  1. DATOS DE ARRANQUE
+// ---------------------------------------------------------------
+function obtenerDatosDeArranque() {
+  const hc = ss_().getSheetByName(CONFIG.HOJA_CLIENTES);
+  const clientes = [];
+  if (hc) {
+    const data = hc.getDataRange().getDisplayValues();
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][1]) clientes.push({ nombre: data[i][1], rif: data[i][2], telefono: data[i][3], correo: data[i][4] });
+    }
+  }
+  return { numero: proximoNumero_(), clientes: clientes };
+}
+
+function proximoNumero_() {
+  const h = ss_().getSheetByName(CONFIG.HOJA_HISTORIAL);
+  let max = 0;
+  if (h && h.getLastRow() > 1) {
+    h.getRange(2, 1, h.getLastRow() - 1, 1).getValues().forEach(r => {
+      const n = numeroEntero_(r[0]);
+      if (n > max) max = n;
+    });
+  }
+  return formatearNumero_(max + 1);
+}
+
+// ---------------------------------------------------------------
+//  2. ESCRIBIR EL PRESUPUESTO EN LA HOJA
+//     Fila 7: título · Fila 9: encabezados · Filas 10-45: artículos
+//     Filas 48-53: cliente + resumen · Filas 54-55: dirección y teléfonos
+//     NOTA y OBSERVACIÓN (opcionales) van después del último artículo, antes del recuadro.
+//     Devuelve la última fila usada para saber dónde cortar el PDF.
+// ---------------------------------------------------------------
+function escribirDatosEnHoja_(d) {
+  const hoja = hojaPresupuesto_();
+  const F = CONFIG.FILA_ITEMS;
+  const n = d.items.length;
+  const t = calcularTotales_(d);
+  const SOLIDO = SpreadsheetApp.BorderStyle.SOLID;
+  const MEDIO = SpreadsheetApp.BorderStyle.SOLID_MEDIUM;
+
+  // Altura (px) de las filas 1-9 (membrete + título + encabezado): punto de partida del reparto en páginas
+  let yInicio = 0;
+  for (let r = 1; r < F; r++) {
+    yInicio += r === CONFIG.FILA_TITULO ? 30 : (r === CONFIG.FILA_ENCABEZADO ? 22 : hoja.getRowHeight(r));
+  }
+
+  // Reparto de artículos: hasta 36 caben en una página con el recuadro anclado en la fila 48.
+  // Con más, la tabla sigue en la página siguiente (repitiendo el encabezado) y el recuadro con los
+  // totales, la dirección y los teléfonos queda completo en la ÚLTIMA página, nunca partido.
+  const plan = planificarFilas_(d, yInicio, anchoTabla_(hoja));
+  const filasTabla = plan.filas;
+  Logger.log('Páginas planificadas: ' + plan.paginas);
+  const s = F + filasTabla.length;
+  const filaDir = s + 6;                    // 54
+  const filaTel = s + 7;                    // 55
+  const ultimaFila = filaTel;               // 55
+
+  // Quitar protecciones que impidan escribir desde la fila 6 (A:D). El membrete (filas 1-5) queda como esté.
+  liberarZonaProtegida_(hoja);
+
+  // Asegurar filas suficientes
+  if (hoja.getMaxRows() < ultimaFila + 1) hoja.insertRowsAfter(hoja.getMaxRows(), ultimaFila + 1 - hoja.getMaxRows());
+
+  // Limpiar todo lo que hay desde la fila 6 hacia abajo (columnas A:D)
+  const L = CONFIG.FILA_LIMPIEZA;
+  const zona = hoja.getRange(L, 1, hoja.getMaxRows() - L + 1, 4);
+  zona.breakApart();
+  zona.clear();
+  // Alturas limpias (21 px) desde los artículos hasta el final: evita que queden alturas de un presupuesto anterior
+  hoja.setRowHeights(F, ultimaFila - F + 1, 21);
+
+  // --- Fila 7: PRESUPUESTO + número ---
+  hoja.getRange(CONFIG.FILA_TITULO, 1, 1, 4).merge()
+    .setValue('PRESUPUESTO ' + d.numero)
+    .setFontFamily('Arial').setFontSize(14).setFontWeight('bold')
+    .setHorizontalAlignment('center').setVerticalAlignment('middle');
+  hoja.setRowHeight(CONFIG.FILA_TITULO, 30);
+
+  // --- Fila 9: encabezados de la tabla ---
+  hoja.getRange(CONFIG.FILA_ENCABEZADO, 1, 1, 4)
+    .setValues([['DESCRIPCION', 'CANTIDAD', 'PRECIO UNITARIO', 'SUBTOTAL']])
+    .setFontFamily('Arial').setFontSize(9).setFontWeight('bold')
+    .setHorizontalAlignment('center').setVerticalAlignment('middle')
+    .setBorder(true, true, true, true, true, true, 'black', SOLIDO);
+  hoja.setRowHeight(CONFIG.FILA_ENCABEZADO, 22);
+
+  // --- Artículos (desde la fila 10). Si la tabla pasa a otra página, esa página empieza con el encabezado repetido ---
+  const ENCABEZADO = ['DESCRIPCION', 'CANTIDAD', 'PRECIO UNITARIO', 'SUBTOTAL'];
+  const valores = filasTabla.map((f, k) => {
+    const r = F + k;
+    if (f.tipo === 'item') {
+      const it = d.items[f.i];
+      return [it.desc, it.cant, it.precio, '=B' + r + '*C' + r];
+    }
+    return f.tipo === 'enc' ? ENCABEZADO : ['', '', '', ''];
+  });
+  hoja.getRange(F, 1, valores.length, 4).setValues(valores)
+    .setFontFamily('Arial').setFontSize(9).setVerticalAlignment('middle');
+
+  // Formato por tramos seguidos del mismo tipo (artículos / encabezado repetido / filas en blanco)
+  let k = 0;
+  while (k < filasTabla.length) {
+    const tipo = filasTabla[k].tipo;
+    let j = k;
+    while (j + 1 < filasTabla.length && filasTabla[j + 1].tipo === tipo) j++;
+    const cnt = j - k + 1, fila0 = F + k;
+    if (tipo === 'item') {
+      hoja.getRange(fila0, 1, cnt, 4).setBorder(true, true, true, true, true, true, 'black', SOLIDO);
+      hoja.getRange(fila0, 1, cnt, 1).setWrap(true).setHorizontalAlignment('left');
+      hoja.getRange(fila0, 2, cnt, 1).setHorizontalAlignment('center').setNumberFormat('General');
+      hoja.getRange(fila0, 3, cnt, 2).setHorizontalAlignment('center').setNumberFormat(CONFIG.FMT_USD);
+    } else if (tipo === 'enc') {
+      hoja.getRange(fila0, 1, cnt, 4).setFontWeight('bold')
+        .setHorizontalAlignment('center')
+        .setBorder(true, true, true, true, true, true, 'black', SOLIDO);
+    } else if (tipo === 'tit') {
+      // Título de NOTA / OBSERVACIÓN: A:D combinadas
+      for (let r = 0; r < cnt; r++) {
+        hoja.getRange(fila0 + r, 1, 1, 4).merge().setValue(filasTabla[k + r].texto)
+          .setFontWeight('bold').setHorizontalAlignment('center')
+          .setBorder(true, true, true, true, false, false, 'black', SOLIDO);
+      }
+    } else if (tipo === 'txt') {
+      // Texto de la nota / observación: un solo cuadro combinado A:D (varias filas de alto)
+      hoja.getRange(fila0, 1, cnt, 4).merge().setValue(filasTabla[k].texto)
+        .setWrap(true).setHorizontalAlignment('left').setVerticalAlignment('top')
+        .setBorder(true, true, true, true, false, false, 'black', SOLIDO);
+    }
+    k = j + 1;
+  }
+  // Alto de cada fila según el largo de la descripción (las demás ya quedaron en 21)
+  filasTabla.forEach((f, i) => { if (f.h !== 21) hoja.setRowHeight(F + i, f.h); });
+
+  // --- Recuadro DATOS DEL CLIENTE / RESUMEN (filas 48 a 53) ---
+  const izquierda = [
+    'CLIENTE:  ' + (d.cliente || '—'),
+    'TELÉFONO:  ' + (d.telefono || '—'),
+    'Nº PRESUPUESTO:  ' + d.numero,
+    'FECHA:  ' + (d.fecha || '—'),
+    'VIGENCIA:  ' + d.vigencia + ' Días'
+  ];
+  const derecha = [
+    ['SUB TOTAL', t.sub, CONFIG.FMT_USD],
+    ['IVA (' + d.iva + '%)', t.iva, CONFIG.FMT_USD],
+    ['TOTAL PRESUPUESTO', t.total, CONFIG.FMT_USD],
+    ['TASA BCV', d.tasa, CONFIG.FMT_BS],
+    ['TOTAL EN BS', t.totalBs, CONFIG.FMT_BS]
+  ];
+
+  const bloque = hoja.getRange(s, 1, 6, 4);
+  bloque.setFontFamily('Arial').setFontSize(9).setFontWeight('bold').setVerticalAlignment('middle')
+    .setBackground(CONFIG.AMARILLO);
+
+  hoja.getRange(s, 1).setValue('DATOS DEL CLIENTE');
+  hoja.getRange(s, 2, 1, 3).merge().setValue('RESUMEN');
+  hoja.getRange(s, 1, 1, 4).setBackground(CONFIG.VERDE).setHorizontalAlignment('center');
+
+  izquierda.forEach((txt, i) => {
+    hoja.getRange(s + 1 + i, 1).setValue(txt).setWrap(true).setHorizontalAlignment('left');
+  });
+  derecha.forEach((f, i) => {
+    const r = s + 1 + i;
+    hoja.getRange(r, 2, 1, 2).merge().setValue(f[0]).setHorizontalAlignment('right');
+    hoja.getRange(r, 4).setValue(f[1]).setNumberFormat(f[2]).setHorizontalAlignment('center');
+  });
+
+  // Resaltar los dos totales
+  hoja.getRange(s + 3, 2, 1, 3).setBackground(CONFIG.VERDE);
+  hoja.getRange(s + 5, 2, 1, 3).setBackground(CONFIG.VERDE);
+
+  bloque.setBorder(true, true, true, true, true, true, 'black', SOLIDO);
+  hoja.setRowHeights(s, 6, 21);
+
+  // --- Filas 54 y 55: dirección y teléfonos (letra azul, fondo blanco, recuadro) ---
+  hoja.getRange(filaDir, 1, 1, 4).merge().setValue(CONFIG.DIRECCION);
+  hoja.getRange(filaTel, 1, 1, 4).merge().setValue(CONFIG.TELEFONOS);
+  hoja.getRange(filaDir, 1, 2, 4)
+    .setFontFamily('Arial').setFontSize(11).setFontWeight('bold').setFontColor(CONFIG.COLOR_AZUL)
+    .setBackground('#ffffff').setHorizontalAlignment('center').setVerticalAlignment('middle')
+    .setBorder(true, true, true, true, false, false, 'black', MEDIO);
+  hoja.setRowHeights(filaDir, 2, 24);
+
+  SpreadsheetApp.flush();
+  return ultimaFila;
+}
+
+// Ancho total (px) de las columnas A:D
+function anchoTabla_(hoja) {
+  let total = 0;
+  for (let c = 1; c <= 4; c++) total += hoja.getColumnWidth(c);
+  return total;
+}
+
+// Alto de la fila de un artículo según el largo de la descripción (aprox. 58 caracteres por línea)
+function alturaItem_(it) {
+  const lineas = Math.max(1, Math.ceil(it.desc.length / 58));
+  return Math.max(21, lineas * 13 + 8);
+}
+
+// Cantidad de filas (de 21 px) que ocupa el cuadro de texto de una nota/observación.
+// El cuadro se combina en A:D y en vertical, así cada fila mantiene su alto normal y el recuadro
+// de totales sigue cayendo justo en la fila 48.
+function filasTexto_(texto, ancho) {
+  const porLinea = Math.max(40, Math.floor(ancho / 6.2));   // caracteres aprox. por línea (Arial 9)
+  let lineas = 0;
+  String(texto).split(/\r?\n/).forEach(p => { lineas += Math.max(1, Math.ceil(p.length / porLinea)); });
+  return Math.max(2, Math.ceil((lineas * 13 + 8) / 21));
+}
+
+// Decide qué va en cada fila desde la 10 hasta justo antes del recuadro de totales.
+// Devuelve { filas: [{tipo:'item'|'enc'|'blanco'|'tit'|'txt', h, i, texto}], paginas }.
+//  · Después del último artículo van, si existen, NOTA y luego OBSERVACIÓN (una fila en blanco,
+//    la fila del título y el cuadro de texto combinado A:D). Si no hay ninguna, todo queda igual que antes.
+//  · Si todo cabe antes de la fila 48: una sola página con el recuadro anclado en la 48.
+//  · Si no: se calcula dónde termina cada página; al llegar al final se rellena con filas en blanco
+//    hasta pasar el corte, y la página nueva arranca con el encabezado de la tabla repetido.
+//    Antes del recuadro se hace lo mismo si este no cabe completo (totales + dirección + teléfonos),
+//    así el recuadro nunca queda partido entre dos páginas.
+function planificarFilas_(d, yInicio, ancho) {
+  const F = CONFIG.FILA_ITEMS;
+  const filas = [];
+
+  const bloques = [];
+  if (d.nota) bloques.push({ titulo: 'NOTA', texto: d.nota });
+  if (d.observacion) bloques.push({ titulo: 'OBSERVACIÓN', texto: d.observacion });
+  bloques.forEach(b => { b.k = filasTexto_(b.texto, ancho); });
+  const filasBloques = bloques.reduce((suma, b) => suma + 2 + b.k, 0);   // blanco + título + texto
+
+  const agregarBloque = b => {
+    filas.push({ tipo: 'tit', h: 21, texto: b.titulo });
+    for (let r = 0; r < b.k; r++) filas.push({ tipo: 'txt', h: 21, texto: b.texto });
+  };
+
+  if (F + d.items.length + filasBloques + CONFIG.FILAS_LIBRES <= CONFIG.FILA_RESUMEN) {
+    d.items.forEach((it, i) => filas.push({ tipo: 'item', h: alturaItem_(it), i: i }));
+    bloques.forEach(b => { filas.push({ tipo: 'blanco', h: 21 }); agregarBloque(b); });
+    while (F + filas.length < CONFIG.FILA_RESUMEN) filas.push({ tipo: 'blanco', h: 21 });
+    return { filas: filas, paginas: 1 };
+  }
+
+  const U = ancho * (CONFIG.PAGINA_ALTO_IN / CONFIG.PAGINA_ANCHO_IN); // alto de una página, en px de la hoja
+  const margen = U * CONFIG.PAGINA_MARGEN;
+  const H_ENC = 22, H_BLANCO = 21, H_RECUADRO = 6 * 21 + 2 * 24;
+  let y = yInicio, pagina = 1;
+
+  const finPagina = () => pagina * U - margen;
+  const saltarPagina = () => {
+    // Filas en blanco hasta pasar el corte de la página actual
+    while (y <= pagina * U + 8) { filas.push({ tipo: 'blanco', h: H_BLANCO }); y += H_BLANCO; }
+    pagina++;
+  };
+
+  d.items.forEach((it, i) => {
+    const h = alturaItem_(it);
+    if (y + h > finPagina()) {
+      saltarPagina();
+      filas.push({ tipo: 'enc', h: H_ENC }); y += H_ENC;
+    }
+    filas.push({ tipo: 'item', h: h, i: i }); y += h;
+  });
+
+  // Nota y observación: cada una se mantiene completa (título + texto) en la misma página
+  bloques.forEach(b => {
+    const alto = H_BLANCO + 21 * (1 + b.k);
+    if (y + alto > finPagina()) {
+      saltarPagina();                     // empieza arriba de la página nueva, sin fila en blanco previa
+    } else {
+      filas.push({ tipo: 'blanco', h: H_BLANCO }); y += H_BLANCO;
+    }
+    agregarBloque(b); y += 21 * (1 + b.k);
+  });
+
+  const separacion = CONFIG.FILAS_LIBRES * H_BLANCO;
+  if (y + separacion + H_RECUADRO > finPagina()) {
+    saltarPagina();                       // el recuadro empieza arriba de la última página
+  } else {
+    for (let b = 0; b < CONFIG.FILAS_LIBRES; b++) filas.push({ tipo: 'blanco', h: H_BLANCO });
+  }
+  return { filas: filas, paginas: pagina };
+}
+
+// Libera la zona de trabajo (columnas A:D, desde la fila 6) si está protegida.
+// Si la protección pertenece a otra cuenta y este script no puede quitarla, explica qué hacer.
+function liberarZonaProtegida_(hoja) {
+  const L = CONFIG.FILA_LIMPIEZA;
+  const yo = Session.getEffectiveUser().getEmail();
+  const bloqueadas = [];
+
+  // Protecciones de rangos que tocan la zona de trabajo
+  hoja.getProtections(SpreadsheetApp.ProtectionType.RANGE).forEach(pr => {
+    if (pr.isWarningOnly()) return; // solo avisan, no bloquean
+    const r = pr.getRange();
+    if (r.getLastRow() < L || r.getColumn() > 4) return; // no toca la zona
+    if (pr.canEdit()) pr.remove();
+    else bloqueadas.push(r.getA1Notation());
+  });
+
+  // Protección de la hoja completa: se deja protegida, salvo la zona de trabajo
+  const ph = hoja.getProtections(SpreadsheetApp.ProtectionType.SHEET)[0];
+  if (ph && !ph.isWarningOnly()) {
+    if (ph.canEdit()) {
+      const zona = hoja.getRange(L, 1, hoja.getMaxRows() - L + 1, 4);
+      ph.setUnprotectedRanges(ph.getUnprotectedRanges().concat([zona]));
+    } else {
+      bloqueadas.push('hoja completa');
+    }
+  }
+
+  if (bloqueadas.length) {
+    throw new Error('La hoja ' + CONFIG.HOJA_PRESUPUESTO + ' tiene protección que este script no puede quitar (' +
+      bloqueadas.join(', ') + '). En Google Sheets abre Datos > Proteger hojas y rangos, quita esa protección ' +
+      'o agrega la cuenta ' + yo + ' como editora.');
+  }
+}
+
+// Ejecuta esta función desde el editor (botón ▶) para ver qué protecciones hay en la hoja.
+function verProtecciones() {
+  const hoja = hojaPresupuesto_();
+  const yo = Session.getEffectiveUser().getEmail();
+  Logger.log('El script corre como: ' + yo);
+  [SpreadsheetApp.ProtectionType.SHEET, SpreadsheetApp.ProtectionType.RANGE].forEach(tipo => {
+    hoja.getProtections(tipo).forEach(pr => {
+      const editores = pr.getEditors().map(u => u.getEmail()).join(', ') || '(nadie)';
+      Logger.log(tipo + ' | ' + (pr.getRange().getA1Notation()) + ' | solo aviso: ' + pr.isWarningOnly() +
+        ' | yo puedo editarla: ' + pr.canEdit() + ' | editores: ' + editores + ' | ' + (pr.getDescription() || ''));
+    });
+  });
+  Logger.log('Revisión terminada.');
+}
+
+// ---------------------------------------------------------------
+//  3. EXPORTAR A PDF (solo A:D y solo hasta la última fila usada)
+// ---------------------------------------------------------------
+function exportarPdf_(ultimaFila, numero) {
+  const ss = ss_();
+  const hoja = hojaPresupuesto_();
+  DriveApp.getFileById(ss.getId()); // asegura el permiso de Drive para exportar
+
+  // Formato carta: normalmente todo (filas 1 a 55) se ajusta a UNA sola página.
+  // Si hay más de 36 artículos el documento crece y se ajusta al ancho (puede pasar a 2 páginas).
+  const filasBase = CONFIG.FILA_RESUMEN + 7;   // 55: recuadro + dirección + teléfonos
+  const ajuste = ultimaFila <= filasBase ? '&scale=4' : '&fitw=true'; // 4 = ajustar a la página
+
+  const url = 'https://docs.google.com/spreadsheets/d/' + ss.getId() + '/export?format=pdf' +
+    '&gid=' + hoja.getSheetId() +
+    '&size=letter&portrait=true' + ajuste +
+    '&gridlines=false&printtitle=false&sheetnames=false&pagenum=UNDEFINED&fzr=false' +
+    '&top_margin=0.4&bottom_margin=0.4&left_margin=0.4&right_margin=0.4' +
+    '&horizontal_alignment=CENTER' +
+    '&r1=0&c1=0&r2=' + ultimaFila + '&c2=4';
+
+  const resp = UrlFetchApp.fetch(url, {
+    headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
+    muteHttpExceptions: true
+  });
+  if (resp.getResponseCode() !== 200) throw new Error('Google no pudo exportar el PDF (código ' + resp.getResponseCode() + ').');
+  const blob = resp.getBlob().setName('Presupuesto_' + numero + '.pdf');
+  try {
+    const paginas = (blob.getDataAsString('ISO-8859-1').match(/\/Type\s*\/Page[^s]/g) || []).length;
+    Logger.log('Páginas reales del PDF: ' + paginas);
+  } catch (e) {}
+  return blob;
+}
+
+// Ejecuta esta función desde el editor (botón ▶) para probar el reparto en páginas:
+// genera un presupuesto de 45 artículos, lo guarda en tu Drive y muestra en el "Registro de ejecución"
+// las páginas planificadas, las páginas reales y el enlace al PDF para revisarlo.
+function probarPaginacion() {
+  const items = [];
+  for (let i = 1; i <= 45; i++) items.push({ desc: 'Artículo de prueba ' + i, cant: 1, precio: 10 });
+  const d = normalizarDatos_({ numero: '99999', cliente: 'PRUEBA', telefono: '0414-0000000', fecha: '01/01/2026',
+    vigencia: 15, tasa: 40, iva: 0, items: items });
+  const blob = crearPdfBlob_(d);
+  const archivo = DriveApp.createFile(blob.setName('PRUEBA_paginacion.pdf'));
+  Logger.log('PDF de prueba: ' + archivo.getUrl());
+}
+
+function crearPdfBlob_(d) {
+  return conBloqueo_(() => exportarPdf_(escribirDatosEnHoja_(d), d.numero));
+}
+
+function generarPdf(datos) {
+  const d = normalizarDatos_(datos);
+  const blob = crearPdfBlob_(d);
+  return { nombre: blob.getName(), base64: Utilities.base64Encode(blob.getBytes()) };
+}
+
+// ---------------------------------------------------------------
+//  4. ENVIAR POR CORREO
+// ---------------------------------------------------------------
+function enviarPresupuestoPorCorreo(datos, correoDestino) {
+  const correo = String(correoDestino || '').trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) throw new Error('El correo "' + correo + '" no es válido.');
+  const d = normalizarDatos_(datos);
+  const opciones = opcionesRemitente_(); // valida el remitente antes de generar el PDF
+  const blob = crearPdfBlob_(d);
+
+  const cuerpo = 'Estimado/a ' + (d.cliente || 'cliente') + ',\n\n' +
+    'Adjunto a este correo encontrará el presupuesto N° ' + d.numero + ' solicitado.\n\n' +
+    'Quedamos a su entera disposición para cualquier duda o consulta.\n\n' +
+    'Saludos cordiales,\n\n' +
+    'Juan Carlos Romero F.P.\n' +
+    'Técnico en Aire Acondicionado';
+
+  opciones.attachments = [blob];
+  GmailApp.sendEmail(correo, 'Presupuesto N° ' + d.numero + ' - ' + CONFIG.NOMBRE_REMITENTE, cuerpo, opciones);
+  return 'EXITO';
+}
+
+// Decide desde qué dirección sale el correo
+function opcionesRemitente_() {
+  const remitente = String(CONFIG.CORREO_REMITENTE || '').trim().toLowerCase();
+  const propio = String(Session.getEffectiveUser().getEmail() || '').toLowerCase();
+  const opciones = { name: CONFIG.NOMBRE_REMITENTE, replyTo: remitente || propio };
+  if (CONFIG.COPIA_OCULTA) opciones.bcc = CONFIG.COPIA_OCULTA;
+
+  if (!remitente || remitente === propio) return opciones; // sale de la cuenta dueña del script
+
+  const alias = GmailApp.getAliases().map(a => a.toLowerCase());
+  if (alias.indexOf(remitente) === -1) {
+    throw new Error('No puedo enviar desde ' + CONFIG.CORREO_REMITENTE + '. Este script pertenece a ' + propio +
+      '. Cambia CORREO_REMITENTE a ' + propio + ', o agrega ' + CONFIG.CORREO_REMITENTE +
+      ' en Gmail > Configuración > Cuentas > "Enviar como".');
+  }
+  opciones.from = remitente;
+  return opciones;
+}
+
+// Ejecuta esta función UNA VEZ desde el editor (botón ▶) para autorizar Gmail
+// y recibir un correo de prueba en la dirección remitente.
+function probarCorreo() {
+  const opciones = opcionesRemitente_();
+  const destino = CONFIG.CORREO_REMITENTE || Session.getEffectiveUser().getEmail();
+  GmailApp.sendEmail(destino, 'Prueba de envío de presupuestos', 'Si recibes esto, el envío de presupuestos está listo.', opciones);
+  Logger.log('Correo de prueba enviado a ' + destino);
+}
+
+// ---------------------------------------------------------------
+//  RECUPERAR CLAVE (botón "¿Olvidaste tu clave?" de la app)
+//  Envía la clave al mismo correo desde el que salen los presupuestos.
+// ---------------------------------------------------------------
+function recuperarClave_() {
+  // Evita abusos: máximo un correo cada 5 minutos
+  const cache = CacheService.getScriptCache();
+  if (cache.get('recuperacion_enviada')) {
+    throw new Error('Ya se envió un correo hace poco. Revisa tu bandeja (y spam) o intenta en 5 minutos.');
+  }
+
+  const propio = String(Session.getEffectiveUser().getEmail() || '').trim();
+  const remitente = String(CONFIG.CORREO_REMITENTE || '').trim();
+  // Si CORREO_REMITENTE sigue con el ejemplo o está vacío, usa la cuenta dueña del script
+  const destino = (remitente && remitente.toLowerCase() !== 'alexanderguerrab@gmail.com') ? remitente : propio;
+
+  let opciones;
+  try { opciones = opcionesRemitente_(); }
+  catch (err) { opciones = { name: CONFIG.NOMBRE_REMITENTE }; } // si el alias falla, sale desde la cuenta dueña
+  delete opciones.bcc; // la clave no debe ir en copia oculta
+
+  const clave = escaparHtml_(CONFIG.CLAVE_ACCESO);
+  opciones.htmlBody =
+    '<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;border:1px solid #e2e8f0;border-radius:8px">' +
+      '<h2 style="color:#0b111a;margin-top:0">🔑 Recuperación de clave</h2>' +
+      '<p>Se pidió recuperar la clave de acceso de <b>Presupuestos · ' + escaparHtml_(CONFIG.NOMBRE_REMITENTE) + '</b>.</p>' +
+      '<p>Tu clave actual es:</p>' +
+      '<p style="font-size:22px;font-weight:bold;background:#f1f5f9;padding:12px;text-align:center;border-radius:6px;letter-spacing:1px">' + clave + '</p>' +
+      '<p style="color:#64748b;font-size:13px">Si no fuiste tú, cambia CLAVE_ACCESO en el Apps Script y vuelve a implementar.</p>' +
+    '</div>';
+
+  GmailApp.sendEmail(destino, '🔑 Recuperación de clave · Presupuestos',
+    'Tu clave de acceso a Presupuestos es: ' + CONFIG.CLAVE_ACCESO, opciones);
+
+  cache.put('recuperacion_enviada', '1', 300);
+  return 'Te enviamos la clave a ' + ocultarCorreo_(destino) + '. Revisa también la carpeta de spam.';
+}
+
+// Muestra el correo parcialmente: ju***@gmail.com
+function ocultarCorreo_(correo) {
+  const partes = String(correo).split('@');
+  return partes[0].slice(0, 2) + '***@' + (partes[1] || '');
+}
+
+function escaparHtml_(t) {
+  return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ---------------------------------------------------------------
+//  5. HISTORIAL (guarda el detalle completo para poder reimprimir)
+// ---------------------------------------------------------------
+const ENCABEZADOS_HISTORIAL = ['Nº Presupuesto', 'Fecha', 'Cliente', 'Total $', 'Total Bs', 'Teléfono', 'Detalle (no editar)'];
+
+function hojaHistorial_() {
+  const ss = ss_();
+  let h = ss.getSheetByName(CONFIG.HOJA_HISTORIAL);
+  if (!h) {
+    h = ss.insertSheet(CONFIG.HOJA_HISTORIAL);
+    h.appendRow(ENCABEZADOS_HISTORIAL);
+  }
+  // Completa encabezados si la hoja venía de la versión anterior (5 columnas)
+  if (h.getMaxColumns() < 7) h.insertColumnsAfter(h.getMaxColumns(), 7 - h.getMaxColumns());
+  h.getRange(1, 1, 1, 7).setValues([ENCABEZADOS_HISTORIAL])
+    .setFontWeight('bold').setBackground('#1a2332').setFontColor('white');
+  return h;
+}
+
+function buscarFilaHistorial_(h, numero) {
+  const buscado = numeroEntero_(numero);
+  if (h.getLastRow() < 2) return -1;
+  const col = h.getRange(2, 1, h.getLastRow() - 1, 1).getValues();
+  for (let i = 0; i < col.length; i++) {
+    if (numeroEntero_(col[i][0]) === buscado) return i + 2;
+  }
+  return -1;
+}
+
+function guardarEnHistorial(datos) {
+  const d = normalizarDatos_(datos);
+  const t = calcularTotales_(d);
+  return conBloqueo_(() => {
+    const h = hojaHistorial_();
+    const fila = ["'" + d.numero, new Date(), d.cliente, t.total, t.totalBs, d.telefono, JSON.stringify(d)];
+    let r = buscarFilaHistorial_(h, d.numero);
+    if (r === -1) {
+      h.appendRow(fila);
+      r = h.getLastRow();
+    } else {
+      h.getRange(r, 1, 1, 7).setValues([fila]); // si ya existía ese Nº, se actualiza
+    }
+    h.getRange(r, 4).setNumberFormat(CONFIG.FMT_USD);
+    h.getRange(r, 5).setNumberFormat(CONFIG.FMT_BS);
+    return { proximo: proximoNumero_() };
+  });
+}
+
+function obtenerHistorial() {
+  const h = ss_().getSheetByName(CONFIG.HOJA_HISTORIAL);
+  if (!h || h.getLastRow() < 2) return [];
+  const cols = Math.min(7, h.getMaxColumns());
+  const vals = h.getRange(2, 1, h.getLastRow() - 1, cols).getDisplayValues();
+  return vals
+    .filter(r => r[0] !== '')
+    .map(r => ({
+      numero: formatearNumero_(r[0]),
+      fecha: r[1],
+      cliente: r[2],
+      totalUsd: r[3],
+      totalBs: r[4],
+      telefono: r[5] || '',
+      tieneDetalle: !!(r[6] && r[6].charAt(0) === '{')
+    }))
+    .reverse(); // más recientes primero
+}
+
+function obtenerDetalle(numero) {
+  const h = ss_().getSheetByName(CONFIG.HOJA_HISTORIAL);
+  if (!h) throw new Error('Todavía no existe la hoja Historial.');
+  const r = buscarFilaHistorial_(h, numero);
+  if (r === -1) throw new Error('No encontré el presupuesto Nº ' + formatearNumero_(numero) + '.');
+  const json = h.getMaxColumns() >= 7 ? h.getRange(r, 7).getValue() : '';
+  if (!json) throw new Error('El presupuesto Nº ' + formatearNumero_(numero) + ' se guardó con la versión anterior y no tiene el detalle de artículos, por eso no se puede reimprimir.');
+  return JSON.parse(json);
+}
+
+function reimprimirPresupuesto(numero) {
+  return generarPdf(obtenerDetalle(numero));
+}
+
+// ---------------------------------------------------------------
+//  6. CLIENTES (ordenados de la A a la Z)
+// ---------------------------------------------------------------
+function hojaClientes_() {
+  const ss = ss_();
+  let h = ss.getSheetByName(CONFIG.HOJA_CLIENTES);
+  if (!h) {
+    h = ss.insertSheet(CONFIG.HOJA_CLIENTES);
+    h.appendRow(['Fecha de Registro', 'Nombre / Razón Social', 'RIF / Cédula', 'Teléfono', 'Correo Electrónico', 'Dirección/Notas']);
+    h.getRange('A1:F1').setFontWeight('bold').setBackground('#1a2332').setFontColor('white');
+  }
+  return h;
+}
+
+function ordenarClientes_(h) {
+  const ultima = h.getLastRow();
+  if (ultima > 2) h.getRange(2, 1, ultima - 1, 6).sort({ column: 2, ascending: true });
+}
+
+function guardarClienteBD(c) {
+  if (!c || !String(c.nombre || '').trim()) throw new Error('Falta el nombre del cliente.');
+  return conBloqueo_(() => {
+    const h = hojaClientes_();
+    h.appendRow([new Date(), c.nombre, c.rif || '', c.telefono || '', c.correo || '', c.direccion || '']);
+    ordenarClientes_(h);
+    return 'EXITO';
+  });
+}
+
+function obtenerClientes() {
+  const h = ss_().getSheetByName(CONFIG.HOJA_CLIENTES);
+  if (!h) return [];
+  return h.getDataRange().getDisplayValues();
+}
+
+function actualizarCliente(fila, valores) {
+  fila = Number(fila);
+  if (!fila || fila < 2) throw new Error('Fila de cliente no válida.');
+  if (!Array.isArray(valores) || valores.length !== 5) throw new Error('Datos de cliente incompletos.');
+  return conBloqueo_(() => {
+    const h = hojaClientes_();
+    h.getRange(fila, 2, 1, 5).setValues([valores]);
+    ordenarClientes_(h);
+    return 'EXITO';
+  });
+}
+
+
+// ---------------------------------------------------------------
+//  7. TABLAS NUEVAS · FINANZAS Y HERRAMIENTAS
+//  Cada tabla vive en su propia pestaña de Google Sheets (se crea sola la primera vez).
+//  Las fechas se guardan como texto AAAA-MM-DD para que Sheets no las altere
+//  según la configuración regional. Cada registro tiene un ID único (no depende del orden de filas).
+// ---------------------------------------------------------------
+const ESQUEMAS = {
+  ingresos: { hoja: 'Fin_Ingresos', cols: [
+    { k: 'id', t: 'ID' }, { k: 'fecha', t: 'Fecha' }, { k: 'cliente', t: 'Cliente' }, { k: 'presupuesto', t: 'Nº Presupuesto' },
+    { k: 'concepto', t: 'Concepto' }, { k: 'monto', t: 'Monto $', n: true }, { k: 'metodo', t: 'Método de pago' },
+    { k: 'notas', t: 'Notas' }, { k: 'creado', t: 'Registrado' } ] },
+  gastos: { hoja: 'Fin_Gastos', cols: [
+    { k: 'id', t: 'ID' }, { k: 'fecha', t: 'Fecha' }, { k: 'categoria', t: 'Categoría' }, { k: 'descripcion', t: 'Descripción' },
+    { k: 'proveedor', t: 'Proveedor' }, { k: 'monto', t: 'Monto $', n: true }, { k: 'metodo', t: 'Método de pago' },
+    { k: 'notas', t: 'Notas' }, { k: 'creado', t: 'Registrado' } ] },
+  porCobrar: { hoja: 'Fin_PorCobrar', cols: [
+    { k: 'id', t: 'ID' }, { k: 'fecha', t: 'Fecha del trabajo' }, { k: 'cliente', t: 'Cliente' }, { k: 'presupuesto', t: 'Nº Presupuesto' },
+    { k: 'concepto', t: 'Concepto' }, { k: 'monto', t: 'Monto $', n: true }, { k: 'vence', t: 'Pago límite' },
+    { k: 'estado', t: 'Estado' }, { k: 'fechaCobro', t: 'Fecha de cobro' }, { k: 'notas', t: 'Notas' }, { k: 'creado', t: 'Registrado' } ] },
+  proveedores: { hoja: 'Proveedores', cols: [
+    { k: 'id', t: 'ID' }, { k: 'nombre', t: 'Proveedor' }, { k: 'rif', t: 'RIF / Cédula' }, { k: 'telefono', t: 'Teléfono' },
+    { k: 'correo', t: 'Correo' }, { k: 'direccion', t: 'Dirección' }, { k: 'notas', t: 'Notas' }, { k: 'creado', t: 'Registrado' } ] },
+  porPagar: { hoja: 'Fin_PorPagar', cols: [
+    { k: 'id', t: 'ID' }, { k: 'fecha', t: 'Fecha de la compra' }, { k: 'proveedor', t: 'Proveedor' }, { k: 'categoria', t: 'Categoría' },
+    { k: 'descripcion', t: 'Descripción' }, { k: 'monto', t: 'Monto $', n: true }, { k: 'vence', t: 'Pago límite' },
+    { k: 'estado', t: 'Estado' }, { k: 'fechaPago', t: 'Fecha de pago' }, { k: 'notas', t: 'Notas' }, { k: 'creado', t: 'Registrado' } ] },
+  inventario: { hoja: 'Herr_Inventario', cols: [
+    { k: 'id', t: 'ID' }, { k: 'nombre', t: 'Herramienta' }, { k: 'marca', t: 'Marca / modelo' }, { k: 'categoria', t: 'Categoría' },
+    { k: 'cantidad', t: 'Cantidad', n: true }, { k: 'estado', t: 'Estado' }, { k: 'ubicacion', t: 'Ubicación' },
+    { k: 'valor', t: 'Valor c/u $', n: true }, { k: 'notas', t: 'Notas' }, { k: 'creado', t: 'Registrado' } ] },
+  prestamos: { hoja: 'Herr_Prestamos', cols: [
+    { k: 'id', t: 'ID' }, { k: 'herramientaId', t: 'ID Herramienta' }, { k: 'herramienta', t: 'Herramienta' }, { k: 'cantidad', t: 'Cantidad', n: true },
+    { k: 'persona', t: 'Prestada a' }, { k: 'telefono', t: 'Teléfono' }, { k: 'fechaPrestamo', t: 'Fecha de préstamo' },
+    { k: 'fechaPrevista', t: 'Devolución prevista' }, { k: 'estado', t: 'Estado' }, { k: 'fechaDevolucion', t: 'Fecha de devolución' },
+    { k: 'notas', t: 'Notas' }, { k: 'creado', t: 'Registrado' } ] }
+};
+const ESTADOS_HERR = ['Buena', 'Regular', 'Mala', 'En reparación'];
+
+// Ejecuta esta función UNA VEZ desde el editor (botón ▶) si quieres crear todas las pestañas nuevas de antemano.
+// Si no lo haces, cada pestaña se crea sola la primera vez que se usa.
+function prepararHojasNuevas() {
+  Object.keys(ESQUEMAS).forEach(k => hojaTabla_(ESQUEMAS[k]));
+  Logger.log('Pestañas listas: ' + Object.keys(ESQUEMAS).map(k => ESQUEMAS[k].hoja).join(', '));
+}
+
+// ---------- Utilidades de tablas ----------
+function nuevoId_() { return Utilities.getUuid().replace(/-/g, '').slice(0, 8); }
+function ahora_() { return Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm'); }
+function hoy_() { return Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd'); }
+function txt_(v, max) { return String(v == null ? '' : v).trim().slice(0, max || 300); }
+
+function fechaIso_(v, obligatoria, nombre) {
+  const s = txt_(v, 10);
+  if (!s) { if (obligatoria) throw new Error('Falta la fecha ' + nombre + '.'); return ''; }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) throw new Error('La fecha ' + nombre + ' no es válida.');
+  return s;
+}
+
+function monto_(v) {
+  const n = Number(v);
+  if (!isFinite(n) || n <= 0) throw new Error('El monto debe ser mayor que cero.');
+  return redondear_(n);
+}
+
+function hojaTabla_(esq) {
+  const ss = ss_();
+  let h = ss.getSheetByName(esq.hoja);
+  if (!h) {
+    h = ss.insertSheet(esq.hoja);
+    const enc = esq.cols.map(c => c.t);
+    h.getRange(1, 1, 1, enc.length).setValues([enc]).setFontWeight('bold').setBackground('#1a2332').setFontColor('white');
+    h.setFrozenRows(1);
+  }
+  return h;
+}
+
+function filaAObjeto_(esq, fila) {
+  const tz = Session.getScriptTimeZone(), o = {};
+  esq.cols.forEach((c, i) => {
+    const v = fila[i];
+    if (c.n) o[c.k] = Number(v) || 0;
+    else if (v instanceof Date) o[c.k] = Utilities.formatDate(v, tz, 'yyyy-MM-dd');
+    else o[c.k] = v == null ? '' : String(v);
+  });
+  return o;
+}
+
+function leerTabla_(esq) {
+  const h = ss_().getSheetByName(esq.hoja);
+  if (!h || h.getLastRow() < 2) return [];
+  return h.getRange(2, 1, h.getLastRow() - 1, esq.cols.length).getValues()
+    .filter(r => r[0] !== '').map(r => filaAObjeto_(esq, r));
+}
+
+function escribirFila_(h, esq, fila, obj) {
+  const rango = h.getRange(fila, 1, 1, esq.cols.length);
+  rango.setNumberFormats([esq.cols.map(c => c.n ? '#,##0.00' : '@')]);   // '@' = texto plano (no convierte fechas ni teléfonos)
+  rango.setValues([esq.cols.map(c => obj[c.k] === undefined ? '' : obj[c.k])]);
+}
+
+function agregarFila_(esq, obj) {
+  const h = hojaTabla_(esq);
+  escribirFila_(h, esq, h.getLastRow() + 1, obj);
+  return obj;
+}
+
+function buscarFila_(h, esq, id) {
+  if (h.getLastRow() < 2) return -1;
+  const ids = h.getRange(2, 1, h.getLastRow() - 1, 1).getValues();
+  for (let i = 0; i < ids.length; i++) if (String(ids[i][0]) === String(id)) return i + 2;
+  return -1;
+}
+
+function leerFila_(h, esq, fila) { return filaAObjeto_(esq, h.getRange(fila, 1, 1, esq.cols.length).getValues()[0]); }
+
+// ---------------------------------------------------------------
+//  8. FINANZAS
+// ---------------------------------------------------------------
+function finanzasDatos() {
+  return { ingresos: leerTabla_(ESQUEMAS.ingresos), gastos: leerTabla_(ESQUEMAS.gastos), porCobrar: leerTabla_(ESQUEMAS.porCobrar), porPagar: leerTabla_(ESQUEMAS.porPagar) };
+}
+
+function guardarIngreso(r) {
+  if (!r) throw new Error('No llegaron los datos del ingreso.');
+  const reg = {
+    id: nuevoId_(), fecha: fechaIso_(r.fecha, true, 'del ingreso'), cliente: txt_(r.cliente, 120), presupuesto: txt_(r.presupuesto, 20),
+    concepto: txt_(r.concepto, 200), monto: monto_(r.monto), metodo: txt_(r.metodo, 40) || 'Otro', notas: txt_(r.notas, 500), creado: ahora_()
+  };
+  if (!reg.cliente && !reg.concepto) throw new Error('Escribe el cliente o el concepto del ingreso.');
+  return conBloqueo_(() => agregarFila_(ESQUEMAS.ingresos, reg));
+}
+
+function guardarGasto(r) {
+  if (!r) throw new Error('No llegaron los datos del gasto.');
+  const reg = {
+    id: nuevoId_(), fecha: fechaIso_(r.fecha, true, 'del gasto'), categoria: txt_(r.categoria, 60) || 'Otros', descripcion: txt_(r.descripcion, 200),
+    proveedor: txt_(r.proveedor, 120), monto: monto_(r.monto), metodo: txt_(r.metodo, 40) || 'Otro', notas: txt_(r.notas, 500), creado: ahora_()
+  };
+  if (!reg.descripcion) throw new Error('Escribe en qué se gastó.');
+  return conBloqueo_(() => agregarFila_(ESQUEMAS.gastos, reg));
+}
+
+function guardarPorCobrar(r) {
+  if (!r) throw new Error('No llegaron los datos de la cuenta.');
+  const reg = {
+    id: nuevoId_(), fecha: fechaIso_(r.fecha, true, 'del trabajo'), cliente: txt_(r.cliente, 120), presupuesto: txt_(r.presupuesto, 20),
+    concepto: txt_(r.concepto, 200), monto: monto_(r.monto), vence: fechaIso_(r.vence, false, 'límite de pago'),
+    estado: 'Pendiente', fechaCobro: '', notas: txt_(r.notas, 500), creado: ahora_()
+  };
+  if (!reg.cliente) throw new Error('Indica el cliente que debe el pago.');
+  return conBloqueo_(() => agregarFila_(ESQUEMAS.porCobrar, reg));
+}
+
+// Marca la cuenta como cobrada y crea automáticamente el ingreso correspondiente.
+function cobrarPorCobrar(id, metodo) {
+  return conBloqueo_(() => {
+    const esq = ESQUEMAS.porCobrar, h = hojaTabla_(esq), fila = buscarFila_(h, esq, id);
+    if (fila === -1) throw new Error('No encuentro esa cuenta por cobrar.');
+    const c = leerFila_(h, esq, fila);
+    if (c.estado === 'Cobrado') throw new Error('Esa cuenta ya estaba cobrada.');
+    c.estado = 'Cobrado'; c.fechaCobro = hoy_();
+    const ingreso = {
+      id: nuevoId_(), fecha: hoy_(), cliente: c.cliente, presupuesto: c.presupuesto, concepto: c.concepto || 'Cobro de cuenta pendiente',
+      monto: c.monto, metodo: txt_(metodo, 40) || 'Otro', notas: 'Cobro de cuenta por cobrar' + (c.notas ? ' · ' + c.notas : ''), creado: ahora_()
+    };
+    agregarFila_(ESQUEMAS.ingresos, ingreso);   // primero el ingreso: si algo falla, la cuenta sigue pendiente
+    escribirFila_(h, esq, fila, c);
+    return { porCobrar: c, ingreso: ingreso };
+  });
+}
+
+// ---------------------------------------------------------------
+//  PROVEEDORES
+// ---------------------------------------------------------------
+function proveedoresDatos() { return leerTabla_(ESQUEMAS.proveedores); }
+
+function nombreProveedorLibre_(nombre, idPropio) {
+  const n = nombre.toLowerCase();
+  if (leerTabla_(ESQUEMAS.proveedores).some(x => x.id !== idPropio && x.nombre.toLowerCase() === n)) throw new Error('Ya existe un proveedor con ese nombre.');
+}
+
+function guardarProveedor(r) {
+  if (!r) throw new Error('No llegaron los datos del proveedor.');
+  const reg = { id: nuevoId_(), nombre: txt_(r.nombre, 120), rif: txt_(r.rif, 30), telefono: txt_(r.telefono, 40),
+    correo: txt_(r.correo, 120), direccion: txt_(r.direccion, 200), notas: txt_(r.notas, 300), creado: ahora_() };
+  if (!reg.nombre) throw new Error('Escribe el nombre del proveedor.');
+  return conBloqueo_(() => { nombreProveedorLibre_(reg.nombre, ''); return agregarFila_(ESQUEMAS.proveedores, reg); });
+}
+
+function actualizarProveedor(id, v) {
+  if (!v) throw new Error('No llegaron los datos del proveedor.');
+  return conBloqueo_(() => {
+    const esq = ESQUEMAS.proveedores, h = hojaTabla_(esq), fila = buscarFila_(h, esq, id);
+    if (fila === -1) throw new Error('No encuentro ese proveedor.');
+    const c = leerFila_(h, esq, fila);
+    const nuevo = { id: c.id, nombre: txt_(v.nombre, 120), rif: txt_(v.rif, 30), telefono: txt_(v.telefono, 40),
+      correo: txt_(v.correo, 120), direccion: txt_(v.direccion, 200), notas: txt_(v.notas, 300), creado: c.creado };
+    if (!nuevo.nombre) throw new Error('El proveedor necesita un nombre.');
+    nombreProveedorLibre_(nuevo.nombre, id);
+    escribirFila_(h, esq, fila, nuevo);
+    return nuevo;
+  });
+}
+
+function eliminarProveedor(id) {
+  return conBloqueo_(() => {
+    const esq = ESQUEMAS.proveedores, h = hojaTabla_(esq), fila = buscarFila_(h, esq, id);
+    if (fila === -1) throw new Error('No encuentro ese proveedor (quizás ya fue eliminado).');
+    h.deleteRow(fila);
+    return 'EXITO';
+  });
+}
+
+// Deudas a crédito: no cuentan como gasto hasta que se pagan (los gastos son pagos inmediatos).
+function guardarPorPagar(r) {
+  if (!r) throw new Error('No llegaron los datos de la cuenta por pagar.');
+  const reg = {
+    id: nuevoId_(), fecha: fechaIso_(r.fecha, true, 'de la compra'), proveedor: txt_(r.proveedor, 120), categoria: txt_(r.categoria, 60) || 'Otros',
+    descripcion: txt_(r.descripcion, 200), monto: monto_(r.monto), vence: fechaIso_(r.vence, false, 'límite de pago'),
+    estado: 'Pendiente', fechaPago: '', notas: txt_(r.notas, 500), creado: ahora_()
+  };
+  if (!reg.proveedor) throw new Error('Indica a quién le debes el pago.');
+  if (!reg.descripcion) throw new Error('Escribe qué se compró a crédito.');
+  return conBloqueo_(() => agregarFila_(ESQUEMAS.porPagar, reg));
+}
+
+// Marca la deuda como pagada y crea automáticamente el gasto correspondiente.
+function pagarPorPagar(id, metodo) {
+  return conBloqueo_(() => {
+    const esq = ESQUEMAS.porPagar, h = hojaTabla_(esq), fila = buscarFila_(h, esq, id);
+    if (fila === -1) throw new Error('No encuentro esa cuenta por pagar.');
+    const c = leerFila_(h, esq, fila);
+    if (c.estado === 'Pagado') throw new Error('Esa cuenta ya estaba pagada.');
+    c.estado = 'Pagado'; c.fechaPago = hoy_();
+    const gasto = {
+      id: nuevoId_(), fecha: hoy_(), categoria: c.categoria || 'Otros', descripcion: c.descripcion || 'Pago de cuenta por pagar',
+      proveedor: c.proveedor, monto: c.monto, metodo: txt_(metodo, 40) || 'Otro',
+      notas: 'Pago de cuenta por pagar' + (c.notas ? ' · ' + c.notas : ''), creado: ahora_()
+    };
+    agregarFila_(ESQUEMAS.gastos, gasto);   // primero el gasto: si algo falla, la deuda sigue pendiente
+    escribirFila_(h, esq, fila, c);
+    return { porPagar: c, gasto: gasto };
+  });
+}
+
+function eliminarFinanza(tipo, id) {
+  const esq = { ingreso: ESQUEMAS.ingresos, gasto: ESQUEMAS.gastos, porCobrar: ESQUEMAS.porCobrar, porPagar: ESQUEMAS.porPagar }[tipo];
+  if (!esq) throw new Error('Tipo de registro no válido.');
+  return conBloqueo_(() => {
+    const h = hojaTabla_(esq), fila = buscarFila_(h, esq, id);
+    if (fila === -1) throw new Error('No encuentro ese registro (quizás ya fue eliminado).');
+    h.deleteRow(fila);
+    return 'EXITO';
+  });
+}
+
+// ---------------------------------------------------------------
+//  9. HERRAMIENTAS (inventario y préstamos)
+// ---------------------------------------------------------------
+function herramientasDatos() {
+  return { inventario: leerTabla_(ESQUEMAS.inventario), prestamos: leerTabla_(ESQUEMAS.prestamos) };
+}
+
+function unidadesPrestadas_(herramientaId) {
+  return leerTabla_(ESQUEMAS.prestamos)
+    .filter(p => p.herramientaId === herramientaId && p.estado === 'Prestada')
+    .reduce((s, p) => s + p.cantidad, 0);
+}
+
+function validarHerramienta_(v) {
+  if (!v) throw new Error('No llegaron los datos de la herramienta.');
+  const nombre = txt_(v.nombre, 120);
+  if (!nombre) throw new Error('Falta el nombre de la herramienta.');
+  const cantidad = Math.floor(Number(v.cantidad));
+  if (!isFinite(cantidad) || cantidad < 1) throw new Error('La cantidad debe ser 1 o más.');
+  const valor = Number(v.valor) || 0;
+  if (valor < 0) throw new Error('El valor no puede ser negativo.');
+  return {
+    nombre: nombre, marca: txt_(v.marca, 120), categoria: txt_(v.categoria, 60) || 'Otros', cantidad: cantidad,
+    estado: ESTADOS_HERR.indexOf(v.estado) !== -1 ? v.estado : 'Buena', ubicacion: txt_(v.ubicacion, 120),
+    valor: redondear_(valor), notas: txt_(v.notas, 500)
+  };
+}
+
+function guardarHerramienta(r) {
+  const reg = Object.assign({ id: nuevoId_(), creado: ahora_() }, validarHerramienta_(r));
+  return conBloqueo_(() => agregarFila_(ESQUEMAS.inventario, reg));
+}
+
+function actualizarHerramienta(id, valores) {
+  const nueva = validarHerramienta_(valores);
+  return conBloqueo_(() => {
+    const esq = ESQUEMAS.inventario, h = hojaTabla_(esq), fila = buscarFila_(h, esq, id);
+    if (fila === -1) throw new Error('No encuentro esa herramienta.');
+    const prestadas = unidadesPrestadas_(id);
+    if (nueva.cantidad < prestadas) throw new Error('Hay ' + prestadas + ' unidad(es) prestada(s); la cantidad no puede ser menor.');
+    const reg = Object.assign({}, leerFila_(h, esq, fila), nueva);
+    escribirFila_(h, esq, fila, reg);
+    return reg;
+  });
+}
+
+function eliminarHerramienta(id) {
+  return conBloqueo_(() => {
+    const esq = ESQUEMAS.inventario, h = hojaTabla_(esq), fila = buscarFila_(h, esq, id);
+    if (fila === -1) throw new Error('No encuentro esa herramienta (quizás ya fue eliminada).');
+    if (unidadesPrestadas_(id) > 0) throw new Error('Esa herramienta está en préstamo. Registra primero la devolución.');
+    h.deleteRow(fila);
+    return 'EXITO';
+  });
+}
+
+function prestarHerramienta(r) {
+  if (!r) throw new Error('No llegaron los datos del préstamo.');
+  const cantidad = Math.floor(Number(r.cantidad));
+  if (!isFinite(cantidad) || cantidad < 1) throw new Error('La cantidad debe ser 1 o más.');
+  const persona = txt_(r.persona, 120);
+  if (!persona) throw new Error('Indica a quién se la prestas.');
+  const fechaPrestamo = fechaIso_(r.fechaPrestamo, true, 'del préstamo');
+  const fechaPrevista = fechaIso_(r.fechaPrevista, false, 'de devolución');
+  if (fechaPrevista && fechaPrevista < fechaPrestamo) throw new Error('La devolución no puede ser antes del préstamo.');
+
+  return conBloqueo_(() => {
+    const esq = ESQUEMAS.inventario, h = hojaTabla_(esq), fila = buscarFila_(h, esq, r.herramientaId);
+    if (fila === -1) throw new Error('No encuentro esa herramienta en el inventario.');
+    const herr = leerFila_(h, esq, fila);
+    if (herr.estado === 'En reparación') throw new Error('Esa herramienta está en reparación.');
+    const disponible = herr.cantidad - unidadesPrestadas_(herr.id);
+    if (cantidad > disponible) throw new Error('Solo hay ' + disponible + ' unidad(es) disponible(s).');
+    const reg = {
+      id: nuevoId_(), herramientaId: herr.id, herramienta: herr.nombre + (herr.marca ? ' · ' + herr.marca : ''), cantidad: cantidad,
+      persona: persona, telefono: txt_(r.telefono, 40), fechaPrestamo: fechaPrestamo, fechaPrevista: fechaPrevista,
+      estado: 'Prestada', fechaDevolucion: '', notas: txt_(r.notas, 500), creado: ahora_()
+    };
+    return agregarFila_(ESQUEMAS.prestamos, reg);
+  });
+}
+
+function devolverHerramienta(id) {
+  return conBloqueo_(() => {
+    const esq = ESQUEMAS.prestamos, h = hojaTabla_(esq), fila = buscarFila_(h, esq, id);
+    if (fila === -1) throw new Error('No encuentro ese préstamo.');
+    const p = leerFila_(h, esq, fila);
+    if (p.estado === 'Devuelta') throw new Error('Ese préstamo ya estaba devuelto.');
+    p.estado = 'Devuelta'; p.fechaDevolucion = hoy_();
+    escribirFila_(h, esq, fila, p);
+    return p;
+  });
+}
