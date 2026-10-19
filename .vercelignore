@@ -1,0 +1,6 @@
+.env
+.env.*
+!.env.example
+migracion/
+legacy/
+node_modules/

@@ -1,0 +1,20 @@
+{
+  "name": "ayudante-integral",
+  "private": true,
+  "version": "2.0.0",
+  "description": "Ayudante Integral: presupuestos, finanzas, herramientas y agenda (Vercel + Supabase)",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vercel dev",
+    "importar": "node --env-file=.env migracion/importar.mjs",
+    "probar-pdf": "node migracion/probar-pdf.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "nodemailer": "^10.1.7",
+    "pdf-lib": "^1.17.1"
+  }
+}
