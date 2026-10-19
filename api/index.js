@@ -4,7 +4,7 @@
  *  Reemplaza al Apps Script: index.html hace fetch('/api') con { accion, idToken, ... }
  *  y recibe { ok: true, data } o { ok: false, error }, igual que antes.
  *
- *   · Cada persona entra con su cuenta de Firebase. El servidor VALIDA el token de sesión.
+ *   · Cada persona entra con su cuenta de Supabase Auth. El servidor VALIDA el token de sesión.
  *   · Los datos de todos los clientes viven en Supabase, separados por su uid.
  * ==========================================================
  */
@@ -16,6 +16,7 @@ import * as P from '../lib/presupuestos.js';
 import * as T from '../lib/tablas.js';
 import * as PF from '../lib/perfil.js';
 import * as S from '../lib/saas.js';
+import * as R from '../lib/respaldo.js';
 
 // Acciones del panel de administración (solo súper admin y administradores autorizados).
 const ACCIONES_ADMIN = {
@@ -35,7 +36,8 @@ const ACCIONES_ADMIN = {
   admRemitenteObtener:  (p, uid) => S.obtenerRemitenteCobro(),
   admRemitenteGuardar:  (p, uid) => S.guardarRemitenteCobro(p.datos || {}),
   admConfigObtener:     (p, uid) => S.configPublica_(),
-  admConfigGuardar:     (p, uid) => S.guardarConfigApp(p.datos || {})
+  admConfigGuardar:     (p, uid) => S.guardarConfigApp(p.datos || {}),
+  admRespaldo:          (p, uid) => R.respaldoAdmin()
 };
 
 const acciones = {
@@ -49,6 +51,9 @@ const acciones = {
   clientes:          (p, c) => P.obtenerClientes(c),
   guardarCliente:    (p, c) => P.guardarClienteBD(c, p.cliente),
   actualizarCliente: (p, c) => P.actualizarCliente(c, p.id, p.valores),
+
+  // --- Respaldo de los datos del propio usuario ---
+  respaldo:          (p, c) => R.respaldoUsuario(c, p),
 
   // --- Perfil y suscripción ---
   perfil:              (p, c) => PF.obtenerPerfil(c),
@@ -112,7 +117,7 @@ async function arranqueCompleto_(c) {
 async function procesar(p) {
   const accion = String(p.accion || '');
 
-  // 1) Identidad verificada con Firebase (uid y correo salen del token, no del navegador)
+  // 1) Identidad verificada con Supabase Auth (uid y correo salen del token, no del navegador)
   const auth = await verificarToken(p.idToken);
   const uid = auth.uid;
   if (EXIGIR_CORREO_VERIFICADO && !auth.verified && uid !== ADMIN_UID) {

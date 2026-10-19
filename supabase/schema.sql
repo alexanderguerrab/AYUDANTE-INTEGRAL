@@ -4,7 +4,7 @@
 --   · Hoja central: DB_Perfiles, CONTROL_SAAS, FINANZAS_PAGOS, FINANZAS_ESTADO, SCRIPTS DE COBRO
 --   · Hoja de cada cliente: Historial, Base_Clientes, Perfil, Fin_*, Proveedores, Herr_*, Agenda_Citas
 --  Antes cada cliente tenía su propia hoja de cálculo; ahora todo vive en las mismas tablas
---  separado por la columna uid (el UID de Firebase).
+--  separado por la columna uid (el UID de Supabase Auth; las cuentas migradas de Firebase se re-enlazan solas).
 --
 --  Seguridad: RLS activado SIN políticas. Solo el backend de Vercel (con la service_role key)
 --  puede leer o escribir. La anon key no tiene acceso a nada.
@@ -214,3 +214,20 @@ alter table app_config         enable row level security;
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('imagenes', 'imagenes', true, 307200, array['image/jpeg', 'image/png', 'image/webp'])
 on conflict (id) do nothing;
+
+-- ---------- Migración Firebase → Supabase Auth ----------
+-- Las cuentas antiguas tenían un uid de Firebase; al entrar con Supabase Auth (mismo correo verificado) el servidor
+-- cambia ese uid por el nuevo. Para que todos sus datos lo sigan, las llaves foráneas deben tener ON UPDATE CASCADE.
+-- Es idempotente: se puede ejecutar varias veces.
+do $$
+declare r record;
+begin
+  for r in
+    select c.conrelid::regclass as tabla, c.conname
+    from pg_constraint c
+    where c.contype = 'f' and c.confrelid = 'public.usuarios'::regclass and c.confupdtype <> 'c'
+  loop
+    execute format('alter table %s drop constraint %I', r.tabla, r.conname);
+    execute format('alter table %s add constraint %I foreign key (uid) references usuarios(uid) on update cascade on delete cascade', r.tabla, r.conname);
+  end loop;
+end $$;

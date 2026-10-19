@@ -5,7 +5,7 @@ Presupuestos en PDF, clientes, finanzas, proveedores, herramientas, agenda y pan
 - **Frontend:** `index.html` (sin cambios de diseño).
 - **Backend:** `api/index.js` + `lib/`, una función serverless de Vercel. Reemplaza al Apps Script ([legacy/CODIGO GS.txt](legacy/CODIGO%20GS.txt)).
 - **Base de datos:** Supabase (Postgres + Storage para logos y QR). Reemplaza a las hojas de Google Sheets.
-- **Login:** Firebase Auth (el mismo de antes, los usuarios no cambian).
+- **Login:** Supabase Auth (correo/contraseña y Google). Reemplaza a Firebase Auth.
 - **Correo:** Gmail por SMTP con contraseña de aplicación (reemplaza a `GmailApp`).
 
 | Antes (Google Sheets)                          | Ahora (Supabase)                          |
@@ -33,7 +33,27 @@ Antes cada cliente tenía su propia hoja de cálculo. Ahora todo está en las mi
    2. Descarga la carpeta «Exportacion Supabase» de Drive y descomprímela en `migracion/datos/`.
    3. Copia `.env.example` a `.env`, llénalo y ejecuta `npm install` y luego `npm run importar`.
 4. **Desplegar:** haz push a GitHub (Vercel despliega solo) o ejecuta `vercel --prod`.
-5. **Firebase:** si el dominio cambia, agrégalo en Firebase > Authentication > Settings > Authorized domains.
+5. **Supabase Auth** (ver la sección siguiente).
+
+## Login con Supabase Auth
+
+1. En `index.html` pega `SUPABASE_URL` y `SUPABASE_ANON_KEY` (Project Settings > API, clave **anon / public**; la `service_role` nunca va ahí).
+2. Authentication > URL Configuration: pon tu dominio en **Site URL** y agrégalo en **Redirect URLs** (también `http://localhost:3000` para desarrollo).
+3. Authentication > Emails > **SMTP Settings**: configura tu Gmail (el mismo de `SMTP_USER` y su contraseña de aplicación) o los correos de confirmación no llegarán a clientes reales (el servicio gratuito de Supabase solo envía a pocas direcciones).
+3b. Authentication > Providers > **Email**: deja activado **Confirm email** (es lo que impide que alguien reclame un correo ajeno al migrar). Si quieres, personaliza las plantillas de correo en Authentication > Emails.
+4. Authentication > Providers > **Google**: actívalo con el Client ID y Secret de tu proyecto de Google Cloud, y agrega en Google la URI de redirección que te muestra Supabase.
+5. Vuelve a ejecutar `supabase/schema.sql` (agrega `ON UPDATE CASCADE` a las llaves foráneas; es idempotente).
+
+### Pasar los usuarios de Firebase a Supabase
+
+- **Datos:** no hay que hacer nada. La primera vez que alguien entra con Supabase usando el **mismo correo** (verificado), su cuenta y todos sus datos pasan solos a su nuevo UID.
+- **Contraseñas:** Firebase no las entrega en claro. Cada persona pulsa **«Crear cuenta»** con el **mismo correo** que ya tenía, elige una contraseña nueva y confirma su correo con el enlace que le llega; al entrar verá todos sus datos de antes. Quien entraba con Google solo pulsa «Entrar con Google». («¿Olvidaste tu contraseña?» solo sirve cuando la cuenta ya existe en Supabase.)
+- **Súper administrador:** entra tú primero. Luego copia tu «User UID» de Authentication > Users y ponlo en `ADMIN_UID` en Vercel (y vuelve a desplegar). Hasta entonces sigues siendo administrador por tu rol, pero no «súper».
+- Ya no se usa `FIREBASE_API_KEY`; puedes borrarla de Vercel.
+
+## Respaldo de datos
+
+Perfil > **Respaldo de datos**. Cada usuario descarga lo suyo en Excel (para revisar) o JSON completo (para guardar tal cual). Los administradores ven además la tarjeta de la plataforma: usuarios, suscripciones, pagos, plantillas de cobro y configuración, más sus propios datos; nunca los presupuestos, clientes ni finanzas de otros usuarios. El código está en `lib/respaldo.js` (acciones `respaldo` y `admRespaldo`) y al final de `index.html`.
 
 ## Desarrollo
 
