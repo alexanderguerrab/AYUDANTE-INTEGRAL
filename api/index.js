@@ -15,6 +15,7 @@ import { entornoUsuario_, isUserAdmin, registrarTelefono, getUsersList, actualiz
 import * as P from '../lib/presupuestos.js';
 import * as T from '../lib/tablas.js';
 import * as PF from '../lib/perfil.js';
+import * as PL from '../lib/plantilla.js';
 import * as S from '../lib/saas.js';
 import * as R from '../lib/respaldo.js';
 
@@ -67,6 +68,12 @@ const acciones = {
   enviarRecordatorio:  (p, c) => PF.enviarRecordatorioCorreo(c, p.datos || {}),
   guardarGmail:        (p, c) => PF.guardarGmailConectado(c, p.correo),
 
+  // --- Diseño (plantilla) del presupuesto ---
+  plantilla:           (p, c) => PL.obtenerPlantilla(c),
+  guardarPlantilla:    (p, c) => PL.guardarPlantilla(c, p.plantilla),
+  restablecerPlantilla:(p, c) => PL.restablecerPlantilla(c),
+  pdfPrueba:           (p, c) => P.pdfDePrueba(c, p.plantilla),
+
   // --- Finanzas ---
   finanzasDatos:     (p, c) => T.finanzasDatos(c),
   guardarIngreso:    (p, c) => T.guardarIngreso(c, p.registro),
@@ -100,11 +107,11 @@ const acciones = {
 };
 
 async function arranqueCompleto_(c) {
-  const [base, perfil, suscripcion, scripts, config] = await Promise.all([
-    P.obtenerDatosDeArranque(c), PF.obtenerPerfil(c), S.suscripcionDe_(c.uid), PF.obtenerScriptsCobro(c), S.configPublica_()
+  const [base, perfil, suscripcion, scripts, config, plantilla] = await Promise.all([
+    P.obtenerDatosDeArranque(c), PF.obtenerPerfil(c), S.suscripcionDe_(c.uid), PF.obtenerScriptsCobro(c), S.configPublica_(), PL.obtenerPlantilla(c)
   ]);
   Object.assign(base, {
-    perfil, suscripcion, scripts, config,
+    perfil, suscripcion, scripts, config, plantilla,
     isAdmin: c.env.esSuper || c.env.rol === 'Administrador', isSuperAdmin: c.env.esSuper, email: c.email
   });
   // Si el nombre o la especialidad del perfil cambiaron, se actualiza la lista de usuarios del panel
