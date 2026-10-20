@@ -7598,7 +7598,7 @@
       const bloque = (tit, txt) => txt ? `<div style="margin-top:17px"><div class="pl-c cen plb" style="border:${B}">${tit}</div><div style="border:${B};border-top:0;padding:5px 4px;min-height:34px;white-space:pre-wrap">${esc(txt)}</div></div>` : '';
 
       // Recuadro final
-      const izq = ['CLIENTE:  Cliente de ejemplo', 'TELÉFONO:  0414-0000000', 'Nº PRESUPUESTO:  00001', 'FECHA:  ' + new Date().toLocaleDateString('es-VE')];
+      const izq = ['CLIENTE:  Cliente de ejemplo', 'TELÉFONO / RIF:  0414-0000000', 'Nº PRESUPUESTO:  00001', 'FECHA:  ' + new Date().toLocaleDateString('es-VE')];
       if (P.vigencia) izq.push('VIGENCIA:  15 Días');
       const der = [['SUB TOTAL', '$' + n2(sub)], ['IVA (16%)', '$' + n2(iva)], ['TOTAL PRESUPUESTO', '$' + n2(total), 1]];
       if (P.bs) der.push(['TASA BCV', 'Bs' + n2(40)], ['TOTAL EN BS', 'Bs' + n2(total * 40), 1]);
