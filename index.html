@@ -6460,49 +6460,10 @@
     async function cargarSuscripcion() { try { susRender(await api('miSuscripcion')); } catch (e) { alertaBonita('No se pudo cargar', mensajeError(e), 'error'); } }
 
     // =====================================================================
-    //  TÉRMINOS Y CONDICIONES · POLÍTICA DE PRIVACIDAD
-    //  Para cambiar los textos edita solo lo que está dentro de las comillas invertidas (`...`).
+    //  TÉRMINOS Y PRIVACIDAD: páginas propias (/terminos y /privacidad). Para cambiar los textos edita terminos.html y privacidad.html
     // =====================================================================
-    const LEGAL_FECHA = 'octubre de 2026';
-    const LEGAL = {
-      terminos: {
-        titulo: 'Términos y Condiciones', html: `
-        <p><em>Última actualización: ${LEGAL_FECHA}</em></p>
-        <h3>1. Qué es Ayudante Integral</h3>
-        <p>Ayudante Integral es una herramienta en línea para técnicos y pequeños negocios: crear presupuestos, llevar clientes, finanzas, proveedores, herramientas y agenda. Al crear una cuenta o usar la aplicación aceptas estos términos.</p>
-        <h3>2. Tu cuenta</h3>
-        <p>Debes dar datos verdaderos y mantener tu contraseña en secreto. Eres responsable de lo que se haga con tu cuenta. Las cuentas nuevas pueden quedar pendientes hasta que el administrador las autorice.</p>
-        <h3>3. Suscripción y pagos</h3>
-        <p>El acceso puede requerir una suscripción. El plan, el monto y las fechas de pago se te informan al contratarla. Si la suscripción vence sin renovarse, el acceso puede suspenderse; tus datos se conservan mientras tu cuenta exista.</p>
-        <h3>4. Uso permitido</h3>
-        <p>No puedes usar la aplicación para fines ilegales, intentar acceder a datos de otras personas, ni afectar su funcionamiento. Podemos suspender cuentas que incumplan estas reglas.</p>
-        <h3>5. Tus datos y tu contenido</h3>
-        <p>La información que registras (clientes, presupuestos, finanzas) es tuya y eres responsable de que sea correcta y de tener derecho a usarla. Puedes descargar una copia desde Perfil → Respaldo de datos. Te recomendamos hacerlo cada semana.</p>
-        <h3>6. Responsabilidad</h3>
-        <p>La aplicación se ofrece «tal cual». Hacemos lo posible por que funcione sin interrupciones, pero no garantizamos que esté libre de errores o caídas. Los presupuestos y cálculos son una ayuda: revísalos antes de entregarlos a tus clientes.</p>
-        <h3>7. Cambios y contacto</h3>
-        <p>Podemos actualizar estos términos; la fecha de arriba indica la versión vigente. Si tienes dudas, escríbenos por el botón de soporte (WhatsApp o correo) de la aplicación.</p>` },
-      privacidad: {
-        titulo: 'Política de Privacidad', html: `
-        <p><em>Última actualización: ${LEGAL_FECHA}</em></p>
-        <h3>1. Qué datos guardamos</h3>
-        <p>Tu correo, teléfono, nombre y datos de tu negocio; y la información que tú registras: presupuestos, clientes, ingresos, gastos, proveedores, herramientas, préstamos y citas. También los pagos de tu suscripción.</p>
-        <h3>2. Para qué los usamos</h3>
-        <p>Solo para que la aplicación funcione: iniciar tu sesión, mostrar tu información, generar tus presupuestos, gestionar tu suscripción y enviarte avisos de cuenta o de cobro.</p>
-        <h3>3. Con quién se comparten</h3>
-        <p>No vendemos tus datos. Se guardan con proveedores tecnológicos que hacen posible el servicio (alojamiento, base de datos, autenticación y envío de correos). Si conectas tu Gmail para enviar presupuestos, el envío se hace desde tu propia cuenta.</p>
-        <h3>4. Privacidad entre usuarios</h3>
-        <p>Cada persona solo ve sus propios datos. El administrador de la plataforma puede ver los datos de cuenta (nombre, correo, teléfono, estado y pagos) para gestionar el servicio, pero no usa tus presupuestos, clientes ni finanzas.</p>
-        <h3>5. Seguridad</h3>
-        <p>Tu sesión está protegida con autenticación y las conexiones van cifradas. Aun así, ningún sistema es infalible: usa una contraseña única y no la compartas.</p>
-        <h3>6. Tus derechos</h3>
-        <p>Puedes pedir en cualquier momento ver, corregir, descargar o eliminar tus datos. Descarga una copia desde Perfil → Respaldo de datos o escríbenos por soporte.</p>
-        <h3>7. Cambios y contacto</h3>
-        <p>Si esta política cambia, la fecha de arriba se actualiza. Para cualquier consulta usa el botón de soporte de la aplicación.</p>` }
-    };
     function verLegal(cual) {
-      const d = LEGAL[cual]; if (!d) return;
-      Swal.fire({ title: d.titulo, html: '<div class="legal-modal">' + d.html + '</div>', width: 640, background: '#1a2332', color: '#e2e8f0', confirmButtonColor: '#0284c7', confirmButtonText: 'Cerrar' });
+      window.open(cual === 'privacidad' ? '/privacidad' : '/terminos', '_blank', 'noopener');
     }
 
     // =====================================================================
