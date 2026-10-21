@@ -51,15 +51,6 @@ Antes cada cliente tenía su propia hoja de cálculo. Ahora todo está en las mi
 - **Súper administrador:** entra tú primero. Luego copia tu «User UID» de Authentication > Users y ponlo en `ADMIN_UID` en Vercel (y vuelve a desplegar). Hasta entonces sigues siendo administrador por tu rol, pero no «súper».
 - Ya no se usa `FIREBASE_API_KEY`; puedes borrarla de Vercel.
 
-## Diseño del presupuesto (plantilla por cliente)
-
-Pestaña **PRESUPUESTOS > Diseño del presupuesto**. Cada cliente elige el aspecto de su PDF: estilo y colores, encabezado (ícono + texto, banner a todo el ancho o solo texto), título, qué muestra el pie, sello, marca de agua y nota/observación habituales. Hay una vista previa en vivo y un botón «Ver PDF de prueba» que genera el PDF real con el diseño aún sin guardar.
-
-- **Dónde se guarda:** `perfiles.datos.plantilla` (JSON en texto, igual que los métodos de pago). No requiere cambios en `schema.sql`. Las imágenes (banner, sello, marca de agua) van al bucket `imagenes`, en la carpeta del usuario.
-- **Por defecto:** quien nunca la configuró usa el estilo «Sobria», sin sello ni marca de agua. El estilo «Clásica (verde y amarillo)» reproduce el diseño anterior del PDF.
-- **Código:** `lib/plantillaBase.js` (valores por defecto), `lib/plantilla.js` (validación y guardado), `lib/pdf.js` (dibujo), acciones `plantilla`, `guardarPlantilla`, `restablecerPlantilla` y `pdfPrueba` en `api/index.js`, y el bloque «DISEÑO DE LA HOJA» al final de `index.html`.
-- Los presupuestos reimpresos usan el diseño **actual** del cliente, no el que tenía cuando se creó el presupuesto.
-
 ## Respaldo de datos
 
 Perfil > **Respaldo de datos**. Cada usuario descarga lo suyo en Excel (para revisar) o JSON completo (para guardar tal cual). Los administradores ven además la tarjeta de la plataforma: usuarios, suscripciones, pagos, plantillas de cobro y configuración, más sus propios datos; nunca los presupuestos, clientes ni finanzas de otros usuarios. El código está en `lib/respaldo.js` (acciones `respaldo` y `admRespaldo`) y al final de `index.html`.
