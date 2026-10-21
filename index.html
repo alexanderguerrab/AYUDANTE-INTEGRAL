@@ -1956,8 +1956,7 @@
       flex: none;
     }
 
-    .legal-acepto .olvide-clave,
-    .legal-pie .olvide-clave {
+    .legal-acepto .olvide-clave {
       margin: 0;
       font-size: inherit;
       display: inline;
@@ -1965,9 +1964,16 @@
 
     .legal-pie {
       color: #cbd5e1;
-      font-size: 12px;
-      margin-top: 12px;
+      font-size: 13px;
+      margin-top: 14px;
+      text-align: center;
       text-shadow: 0 1px 6px rgba(0, 0, 0, .9);
+    }
+
+    .legal-pie .olvide-clave {
+      display: block;
+      margin: 6px auto 0;
+      font-size: 14px;
     }
 
     .legal-modal {
@@ -3200,9 +3206,11 @@
           Crear cuenta</button><br>
         <button type="button" id="btnOlvideClave" class="olvide-clave" onclick="recuperarClave()">¿Olvidaste tu
           contraseña?</button>
-        <p class="legal-pie">Al continuar aceptas los <button type="button" class="olvide-clave"
-            onclick="verLegal('terminos')">Términos y Condiciones</button> y la <button type="button"
-            class="olvide-clave" onclick="verLegal('privacidad')">Política de Privacidad</button>.</p>
+        <p class="legal-pie">Al continuar aceptas los:
+          <button type="button" class="olvide-clave" onclick="verLegal('terminos')">1. Términos y condiciones</button>
+          <button type="button" class="olvide-clave" onclick="verLegal('privacidad')">2. Políticas de
+            privacidad</button>
+        </p>
       </form>
 
       <div id="accCuenta" hidden>
