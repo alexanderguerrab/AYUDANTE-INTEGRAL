@@ -24,7 +24,6 @@
   </script>
   <!-- ===== FIN PWA ===== -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.8"></script>
   <style>
     :root {
@@ -1916,63 +1915,6 @@
       margin-top: 6px;
     }
 
-    .legal-acepto {
-      display: flex;
-      gap: 8px;
-      align-items: flex-start;
-      text-align: left;
-      color: #cbd5e1;
-      font-size: 12px;
-      margin: 0 0 12px;
-      text-shadow: 0 1px 6px rgba(0, 0, 0, .9);
-    }
-
-    .legal-acepto input {
-      width: auto;
-      margin: 2px 0 0;
-      flex: none;
-    }
-
-    .legal-acepto .olvide-clave {
-      margin: 0;
-      font-size: inherit;
-      display: inline;
-    }
-
-    .legal-pie {
-      color: #cbd5e1;
-      font-size: 13px;
-      margin-top: 14px;
-      text-align: center;
-      text-shadow: 0 1px 6px rgba(0, 0, 0, .9);
-    }
-
-    .legal-pie .olvide-clave {
-      display: block;
-      margin: 6px auto 0;
-      font-size: 14px;
-    }
-
-    .legal-modal {
-      text-align: left;
-      font-size: 14px;
-      line-height: 1.6;
-      max-height: 60vh;
-      overflow-y: auto;
-      padding-right: 6px;
-    }
-
-    .legal-modal h3 {
-      font-size: 15px;
-      margin: 16px 0 4px;
-      color: #93c5fd;
-    }
-
-    .legal-modal p,
-    .legal-modal li {
-      margin: 0 0 8px;
-    }
-
     .bienvenida-nota {
       color: #cbd5e1;
       font-size: 12px;
@@ -3127,6 +3069,297 @@
         font-size: 12px;
       }
     }
+
+    /* ---- Condiciones del servicio ---- */
+    .bienvenida-acepto {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 0 0 14px;
+      color: #e2e8f0;
+      font-size: 12px;
+      text-align: left;
+      text-shadow: 0 1px 6px rgba(0, 0, 0, .9);
+      cursor: pointer;
+    }
+
+    .bienvenida-acepto input {
+      width: 18px;
+      height: 18px;
+      margin: 1px 0 0;
+      flex: none;
+    }
+
+    .bienvenida-acepto a {
+      color: #7dd3fc;
+    }
+
+    .pie-legal {
+      margin: 36px 0 12px;
+      text-align: center;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .pie-legal a {
+      color: #94a3b8;
+    }
+
+    /* ---- Aviso: correo propio obligatorio ---- */
+    .aviso-correo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      background: #7c2d12;
+      border: 1px solid #f97316;
+      color: #ffedd5;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin: 0 0 18px;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    .aviso-correo[hidden] {
+      display: none;
+    }
+
+    .aviso-correo span {
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .aviso-correo button {
+      width: auto;
+      padding: 10px 18px;
+      background: #f97316;
+    }
+
+    /* ---- PRESUPUESTOS · Diseño de la hoja ---- */
+    .pl-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .pl-vista {
+      position: sticky;
+      top: 12px;
+    }
+
+    #plCaja {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      border-radius: 4px;
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, .5);
+    }
+
+    #plHoja {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 612px;
+      height: 792px;
+      transform-origin: 0 0;
+      background: #fff;
+      color: #000;
+      font-family: Helvetica, Arial, sans-serif;
+      font-size: 9px;
+      line-height: 1.2;
+      text-align: left;
+    }
+
+    #plHoja * {
+      box-sizing: border-box;
+    }
+
+    .pl-hoja-marca {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      max-height: 80%;
+      pointer-events: none;
+    }
+
+    .pl-hoja-sello {
+      position: absolute;
+      object-fit: contain;
+      opacity: .92;
+      pointer-events: none;
+    }
+
+    .pl-c {
+      display: flex;
+      align-items: center;
+      padding: 0 4px;
+      min-height: 17px;
+      overflow: hidden;
+    }
+
+    .pl-c.cen {
+      justify-content: center;
+      text-align: center;
+    }
+
+    .pl-c.der {
+      justify-content: flex-end;
+    }
+
+    .pl-c.plb {
+      font-weight: bold;
+    }
+
+    .pl-estilos {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .pl-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: var(--campo);
+      border: 2px solid var(--borde);
+      font-size: 12px;
+      text-align: left;
+      letter-spacing: 0;
+    }
+
+    .pl-chip.activo {
+      border-color: var(--acento);
+    }
+
+    .pl-sw {
+      display: flex;
+      flex: none;
+    }
+
+    .pl-sw i {
+      width: 14px;
+      height: 26px;
+      border: 1px solid #64748b;
+      margin-right: -1px;
+    }
+
+    .pl-colores {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 4px 14px;
+      margin-top: 12px;
+    }
+
+    .pl-colores input[type="color"] {
+      height: 38px;
+      padding: 2px;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+
+    .pl-det summary {
+      cursor: pointer;
+      color: var(--acento);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .pl-check {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 12px;
+      font-size: 13px;
+      color: var(--texto);
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .pl-check input {
+      width: 20px;
+      height: 20px;
+      margin: 0;
+      flex: none;
+    }
+
+    .pl-img {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .pl-img img {
+      width: 84px;
+      height: 64px;
+      object-fit: contain;
+      background: repeating-conic-gradient(#e2e8f0 0 25%, #fff 0 50%) 0 0 / 12px 12px;
+      border: 1px solid var(--borde);
+      border-radius: 4px;
+      flex: none;
+    }
+
+    .pl-img .fila-botones {
+      flex: 1;
+    }
+
+    .pl-controles .fila-botones button {
+      flex: none;
+      width: 100%;
+      padding: 12px;
+    }
+
+    .pl-rango {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .pl-rango span {
+      flex: none;
+      width: 110px;
+      font-size: 12px;
+      color: var(--tenue);
+    }
+
+    .pl-rango input {
+      margin: 0;
+      padding: 0;
+    }
+
+    .pl-rango output {
+      flex: none;
+      width: 44px;
+      font-size: 12px;
+      color: var(--texto);
+      text-align: right;
+    }
+
+    .pl-pendiente {
+      text-align: center;
+      font-size: 12px;
+      color: var(--naranja);
+      min-height: 16px;
+      margin: 0 0 10px;
+    }
+
+    @media (max-width: 1100px) {
+      .pl-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .pl-vista {
+        position: static;
+        order: -1;
+      }
+    }
   </style>
 </head>
 
@@ -3157,12 +3390,11 @@
         <div id="accRegistro" hidden>
           <input type="tel" id="accTelefono" placeholder="Teléfono (ej. +584121234567)" autocomplete="tel"
             inputmode="tel" maxlength="25" aria-label="Teléfono">
-          <label class="legal-acepto"><input type="checkbox" id="accAcepto"><span>Acepto los <button type="button"
-                class="olvide-clave" onclick="verLegal('terminos')">Términos y Condiciones</button> y la <button
-                type="button" class="olvide-clave" onclick="verLegal('privacidad')">Política de
-                Privacidad</button>.</span></label>
           <p class="bienvenida-nota">La contraseña debe tener 8 o más caracteres, con mayúscula, minúscula y un símbolo
             (@ # ! $).</p>
+          <label class="bienvenida-acepto"><input type="checkbox" id="accAcepto">
+            <span>Acepto las <a href="/terminos.html" target="_blank" rel="noopener">Condiciones del servicio</a> y la
+              <a href="/privacidad.html" target="_blank" rel="noopener">Política de privacidad</a></span></label>
         </div>
         <button type="submit" id="btnEntrar" class="btn-blue">Entrar</button>
         <button type="button" id="btnGoogle" class="btn-google" onclick="accederConGoogle()">
@@ -3183,11 +3415,7 @@
           Crear cuenta</button><br>
         <button type="button" id="btnOlvideClave" class="olvide-clave" onclick="recuperarClave()">¿Olvidaste tu
           contraseña?</button>
-        <p class="legal-pie">Al continuar aceptas los:
-          <button type="button" class="olvide-clave" onclick="verLegal('terminos')">1. Términos y condiciones</button>
-          <button type="button" class="olvide-clave" onclick="verLegal('privacidad')">2. Políticas de
-            privacidad</button>
-        </p>
+        <p class="bienvenida-nota" style="margin-top:18px"><a href="/privacidad.html" style="color:inherit">Política de privacidad</a> · <a href="/terminos.html" style="color:inherit">Condiciones del servicio</a></p>
       </form>
 
       <div id="accCuenta" hidden>
@@ -3227,6 +3455,12 @@
       <div class="cab-texto"><small id="cabGrupo"></small><strong id="cabSub"></strong></div>
       <span class="cab-lema" id="cabLema"></span>
     </header>
+
+    <div class="aviso-correo" id="avisoCorreo" hidden>
+      <span>📧 <b>Conecta tu correo.</b> Es obligatorio para enviar presupuestos y recordatorios por correo a tus clientes:
+        salen desde tu propio Gmail.</span>
+      <button type="button" onclick="irAConectarCorreo()">Conectar ahora</button>
+    </div>
 
     <!-- ================= NUEVO PRESUPUESTO ================= -->
     <section id="sec-presupuestos" class="section active">
@@ -4009,6 +4243,138 @@
       </div>
     </section>
 
+    <!-- ================= PRESUPUESTOS · DISEÑO DE LA HOJA ================= -->
+    <section id="sec-plantilla" class="section">
+      <div class="pl-grid">
+        <div class="pl-controles">
+          <div class="card">
+            <h2>🎨 Estilo y colores</h2>
+            <p class="ayuda">Elige un estilo como punto de partida y ajústalo a tu gusto. Así se verán tus presupuestos
+              en PDF y por correo.</p>
+            <div id="plEstilos" class="pl-estilos"></div>
+            <details class="pl-det">
+              <summary>Ajustar los colores uno por uno</summary>
+              <div class="pl-colores">
+                <div><label for="plc-encabezadoTabla">Encabezado de la tabla</label><input type="color" id="plc-encabezadoTabla" data-pl="colores.encabezadoTabla"></div>
+                <div><label for="plc-tituloPie">Títulos del recuadro</label><input type="color" id="plc-tituloPie" data-pl="colores.tituloPie"></div>
+                <div><label for="plc-filas">Filas de datos</label><input type="color" id="plc-filas" data-pl="colores.filas"></div>
+                <div><label for="plc-total">Filas de totales</label><input type="color" id="plc-total" data-pl="colores.total"></div>
+                <div><label for="plc-direccion">Texto de la dirección</label><input type="color" id="plc-direccion" data-pl="colores.direccion"></div>
+                <div><label for="plc-bordes">Líneas y bordes</label><input type="color" id="plc-bordes" data-pl="colores.bordes"></div>
+              </div>
+              <p class="ayuda" style="margin-top:6px">El color del texto se ajusta solo para que siempre se lea bien. Si
+                dejas un color en blanco, esa zona queda sin relleno.</p>
+            </details>
+          </div>
+
+          <div class="card">
+            <h2>🏷️ Encabezado</h2>
+            <label for="plModo">¿Cómo quieres tu encabezado?</label>
+            <select id="plModo" data-pl="encabezado.modo">
+              <option value="logo">Mi ícono + mis datos en texto</option>
+              <option value="banner">Una imagen a todo el ancho (banner)</option>
+              <option value="texto">Solo mis datos en texto</option>
+            </select>
+            <div id="plBoxBanner" hidden style="margin-top:14px">
+              <div class="pl-img">
+                <img id="plImgBanner" alt="Tu banner" hidden>
+                <div class="fila-botones" style="flex-direction:column">
+                  <button type="button" class="btn-blue btn-mini" id="plBtnBanner" onclick="plElegirImagen('banner')">🖼️ Subir banner</button>
+                  <button type="button" class="btn-gris btn-mini" id="plQuitarBanner" onclick="plQuitarImagen('banner')" hidden>Quitar banner</button>
+                </div>
+              </div>
+              <p class="ayuda" style="margin:0 0 6px">Ideal: una imagen horizontal con tu logo, nombre y lema ya incluidos.</p>
+            </div>
+            <div id="plBoxTextos" style="margin-top:14px">
+              <p class="ayuda" style="margin:0 0 10px">Qué datos mostrar (los editas en «Mis datos» del Perfil):</p>
+              <label class="pl-check"><input type="checkbox" data-pl="encabezado.marca"> Nombre del negocio</label>
+              <label class="pl-check"><input type="checkbox" data-pl="encabezado.especialidad"> Especialidad</label>
+              <label class="pl-check"><input type="checkbox" data-pl="encabezado.rif"> RIF / Cédula</label>
+              <label class="pl-check"><input type="checkbox" data-pl="encabezado.correo"> Correo de contacto</label>
+            </div>
+            <label for="plTitulo" style="margin-top:6px">Título del documento</label>
+            <input type="text" id="plTitulo" data-pl="titulo" maxlength="30" placeholder="PRESUPUESTO">
+          </div>
+
+          <div class="card">
+            <h2>📍 Pie de página</h2>
+            <p class="ayuda">Qué sale en el recuadro final. Tu dirección y teléfonos los editas en «Mis datos».</p>
+            <label class="pl-check"><input type="checkbox" data-pl="pie.direccion"> Dirección</label>
+            <label class="pl-check"><input type="checkbox" data-pl="pie.telefonos"> Teléfonos</label>
+            <label class="pl-check"><input type="checkbox" data-pl="pie.vigencia"> Vigencia del presupuesto</label>
+            <label class="pl-check"><input type="checkbox" data-pl="pie.bs"> Tasa BCV y total en Bs</label>
+          </div>
+
+          <div class="card">
+            <h2>🔵 Sello</h2>
+            <p class="ayuda">Opcional. Se estampa sobre el recuadro final del presupuesto. Funciona mejor con un PNG de
+              fondo transparente.</p>
+            <div class="pl-img">
+              <img id="plImgSello" alt="Tu sello" hidden>
+              <div class="fila-botones" style="flex-direction:column">
+                <button type="button" class="btn-blue btn-mini" id="plBtnSello" onclick="plElegirImagen('sello')">📷 Subir sello</button>
+                <button type="button" class="btn-gris btn-mini" id="plQuitarSello" onclick="plQuitarImagen('sello')" hidden>Quitar sello</button>
+              </div>
+            </div>
+            <div id="plBoxSello" hidden>
+              <label for="plSelloPos">Posición</label>
+              <select id="plSelloPos" data-pl="sello.posicion">
+                <option value="izquierda">Izquierda</option>
+                <option value="centro">Centro</option>
+                <option value="derecha">Derecha</option>
+              </select>
+              <div class="pl-rango" style="margin-top:14px"><span>Tamaño</span><input type="range" min="40" max="160" step="2" data-pl="sello.tam"><output></output></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>💧 Marca de agua</h2>
+            <p class="ayuda">Opcional. Una imagen tenue detrás de todo el presupuesto, en todas las páginas.</p>
+            <div class="pl-img">
+              <img id="plImgMarca" alt="Tu marca de agua" hidden>
+              <div class="fila-botones" style="flex-direction:column">
+                <button type="button" class="btn-blue btn-mini" id="plBtnMarca" onclick="plElegirImagen('marca')">📷 Subir marca de agua</button>
+                <button type="button" class="btn-gris btn-mini" id="plQuitarMarca" onclick="plQuitarImagen('marca')" hidden>Quitar marca de agua</button>
+              </div>
+            </div>
+            <div id="plBoxMarca" hidden>
+              <div class="pl-rango"><span>Intensidad</span><input type="range" min="3" max="40" step="1" data-pl="marcaAgua.opacidad"><output></output></div>
+              <div class="pl-rango"><span>Tamaño</span><input type="range" min="20" max="100" step="2" data-pl="marcaAgua.tam"><output></output></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>📝 Nota y observación por defecto</h2>
+            <p class="ayuda">Si las llenas, aparecen ya escritas cuando pulses «Crear nota» o «Crear observación» en un
+              presupuesto nuevo (siempre las puedes cambiar ahí).</p>
+            <label for="plNotaDef">Nota habitual</label>
+            <textarea id="plNotaDef" rows="3" maxlength="600" data-pl="notaDefecto" placeholder="Ej: Todo el material necesario será suministrado por el cliente"></textarea>
+            <label for="plObsDef" style="margin-top:10px">Observación habitual</label>
+            <textarea id="plObsDef" rows="3" maxlength="600" data-pl="obsDefecto" placeholder="Ej: El técnico solo cubre garantía de la instalación"></textarea>
+          </div>
+
+          <div class="card cierre">
+            <p class="pl-pendiente" id="plPendiente"></p>
+            <div class="fila-botones" style="flex-direction:column">
+              <button type="button" id="btn-plantilla" class="btn-blue" onclick="plGuardar()">💾 Guardar diseño</button>
+              <button type="button" id="btn-plprueba" class="btn-green" onclick="plPrueba()">📄 Ver PDF de prueba</button>
+              <button type="button" class="btn-gris" onclick="plRestablecer()">↩︎ Volver al diseño por defecto</button>
+            </div>
+          </div>
+          <input type="file" id="plArchivo" accept="image/*" hidden onchange="plSubirImagen(this)">
+        </div>
+
+        <aside class="pl-vista">
+          <div class="card">
+            <h2>👁️ Vista previa</h2>
+            <div id="plCaja"><div id="plHoja"></div></div>
+            <p class="ayuda" style="margin:12px auto 0">Vista aproximada con datos de ejemplo y tus datos reales del
+              perfil. «Ver PDF de prueba» te muestra el resultado exacto.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
     <!-- ================= PERFIL · DATOS ================= -->
     <section id="sec-perfil-datos" class="section">
       <div class="card">
@@ -4146,19 +4512,6 @@
       </div>
       <p class="resp-pie">Recomendación: haz un respaldo cada semana y guárdalo fuera de la aplicación (tu computador o
         Google Drive).</p>
-    </section>
-
-    <!-- ================= PERFIL · TÉRMINOS Y PRIVACIDAD ================= -->
-    <section id="sec-perfil-legal" class="section">
-      <div class="card">
-        <h2>📄 Términos y privacidad</h2>
-        <p class="ayuda">Aquí puedes leer en cualquier momento las reglas de uso de Ayudante Integral y cómo cuidamos
-          tus datos.</p>
-        <div class="resp-botones">
-          <button type="button" class="btn-blue" onclick="verLegal('terminos')">📜 Términos y Condiciones</button>
-          <button type="button" class="btn-gris" onclick="verLegal('privacidad')">🔒 Política de Privacidad</button>
-        </div>
-      </div>
     </section>
 
     <!-- ================= MI SUSCRIPCIÓN ================= -->
@@ -4411,18 +4764,34 @@
 
     <!-- ================= FINANZAS · SCRIPTS DE COBRO ================= -->
     <section id="sec-fin-scripts" class="section">
-      <div class="card">
+      <div class="card" id="cardCorreo">
         <h2>📧 Correo desde el que se envían tus cobros</h2>
         <p class="ayuda" id="gmailEstado" style="max-width:none"></p>
-        <div class="fila-botones">
-          <button type="button" id="btnGmailConectar" class="btn-blue" onclick="conectarGmail()">🔗 Conectar mi
-            Gmail</button>
-          <button type="button" id="btnGmailQuitar" class="btn-gris" onclick="desconectarGmail()" hidden>✖
-            Desconectar</button>
+        <p class="ayuda" style="max-width:none"><b>Paso 1:</b> crea tu contraseña de aplicación en Google (no es tu
+          contraseña normal).</p>
+        <button type="button" class="btn-orange" onclick="window.open('https://myaccount.google.com/apppasswords', '_blank', 'noopener')">🔑 Crear mi contraseña de aplicación</button>
+        <p class="ayuda" style="max-width:none; margin-top:16px"><b>Paso 2:</b> pega aquí la clave de 16 letras que te
+          dio Google.</p>
+        <div class="flex-row">
+          <div class="flex-col">
+            <label for="gmailCorreoIn">Tu correo de Gmail</label>
+            <input type="email" id="gmailCorreoIn" maxlength="120" placeholder="tunombre@gmail.com" autocomplete="off" inputmode="email">
+            <p class="ayuda" style="margin:-10px 0 14px">Es el correo con el que te registraste; cámbialo si usarás otro Gmail.</p>
+          </div>
+          <div class="flex-col">
+            <label for="gmailClaveIn">Contraseña de aplicación</label>
+            <input type="password" id="gmailClaveIn" maxlength="40" placeholder="16 letras" autocomplete="new-password" spellcheck="false">
+          </div>
         </div>
-        <p class="ayuda" style="margin-top:14px; max-width:none">Es seguro y no necesitas contraseñas: Google te pide
-          permiso, tú lo das y listo. Solo se usa para enviar los correos que tú mandes desde esta app. Si Google
-          muestra «Esta app no está verificada», pulsa «Configuración avanzada» y luego «Ir a la app».</p>
+        <div class="fila-botones">
+          <button type="button" id="btnGmailConectar" class="btn-blue" onclick="conectarGmail()">🔗 Conectar mi Gmail</button>
+          <button type="button" id="btnGmailQuitar" class="btn-gris" onclick="desconectarGmail()" hidden>✖ Desconectar</button>
+        </div>
+        <p class="ayuda" style="margin-top:14px; max-width:none"><b>¿El botón amarillo dice que la opción no está
+            disponible?</b> Primero activa la verificación en 2 pasos en
+          <a href="https://myaccount.google.com/security" target="_blank" rel="noopener" style="color:#7dd3fc">myaccount.google.com/security</a>
+          y vuelve a pulsarlo. En la pantalla de Google escribe un nombre (por ejemplo «Cobros»), pulsa Crear y copia la
+          clave. Aquí se guarda cifrada.</p>
       </div>
       <div class="card">
         <h2>✉️ Configuración de mensajes</h2>
@@ -4457,9 +4826,9 @@
         <input type="email" id="ajSoporteEmail" maxlength="120" placeholder="soporte@tuempresa.com">
         <label for="ajSoporteWa">WhatsApp de soporte (con código de país, solo números)</label>
         <input type="tel" id="ajSoporteWa" maxlength="20" placeholder="584124231008">
-        <label for="ajGoogleId">ID de cliente de Google (para que tus clientes envíen correos desde su Gmail)</label>
-        <input type="text" id="ajGoogleId" maxlength="200" placeholder="123456789-abc.apps.googleusercontent.com">
-        <details class="ayuda-det">
+        <label for="ajGoogleId" style="display:none">ID de cliente de Google (para que tus clientes envíen correos desde su Gmail)</label>
+        <input type="text" id="ajGoogleId" style="display:none" maxlength="200" placeholder="123456789-abc.apps.googleusercontent.com">
+        <details class="ayuda-det" style="display:none">
           <summary>¿Cómo obtengo el ID de cliente de Google?</summary>
           <ol>
             <li>Entra a <b>console.cloud.google.com</b> y elige tu proyecto (sirve el mismo proyecto que usas para el
@@ -4478,6 +4847,11 @@
         <button class="btn-blue" onclick="admGuardarAjustes()">💾 Guardar ajustes</button>
       </div>
     </section>
+
+    <footer class="pie-legal">
+      <a href="/terminos.html" target="_blank" rel="noopener">Condiciones del servicio</a> ·
+      <a href="/privacidad.html" target="_blank" rel="noopener">Política de privacidad</a>
+    </footer>
 
   </main>
 
@@ -4501,7 +4875,7 @@
     // Supabase > Project Settings > API: pega aquí la «Project URL» y la clave «anon / public».
     // La anon key es pública por diseño (la service_role NUNCA va aquí).
     const SUPABASE_URL = 'https://jfygnotukiehhqnitwcj.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_GFORS6DCmpAPC8-a00XZ_g_8rhDozhu';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmeWdub3R1a2llaGhxbml0d2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIzNjAzNDQsImV4cCI6MjEwNzkzNjM0NH0.t9Cg1P4S9ZWbZgXe-DJHqREs7g41hITJRtRT9pb2z3c'
     const SUPABASE_LISTO = !/TU-PROYECTO|TU-ANON-KEY/.test(SUPABASE_URL + SUPABASE_ANON_KEY);
     // WhatsApp de soporte / renovaciones (solo números, con código de país)
     // El administrador puede cambiarlos desde Panel de administrador → Ajustes de la App (estos son solo los valores iniciales)
@@ -4636,11 +5010,12 @@
       if (modoRegistro) {
         if (!passwordValida(clave)) { $('errorEntrada').textContent = 'La contraseña necesita 8 o más caracteres, con mayúscula, minúscula y un símbolo.'; return; }
         if (!telefonoValido(tel)) { $('errorEntrada').textContent = 'Escribe un teléfono válido (ej. +584121234567).'; return; }
-        if (!$('accAcepto').checked) { $('errorEntrada').textContent = 'Para crear tu cuenta debes aceptar los Términos y Condiciones y la Política de Privacidad.'; return; }
+        if (!$('accAcepto').checked) { $('errorEntrada').textContent = 'Para crear tu cuenta debes aceptar las Condiciones del servicio y la Política de privacidad.'; return; }
       }
       try {
         await conCarga($('btnEntrar'), modoRegistro ? 'Creando cuenta...' : 'Entrando...', async () => {
           if (modoRegistro) {
+            try { localStorage.setItem('ai_acepto_pend', correo.toLowerCase()); } catch (e) { /* sin almacenamiento */ }   // marcó la casilla: se registra al entrar
             window._telefonoRegistro = tel;   // si Supabase abre sesión al instante, se guarda en el servidor al entrar
             const { data, error } = await sb.auth.signUp({ email: correo, password: clave, options: { data: { telefono: tel }, emailRedirectTo: location.origin + '/' } });
             if (error) throw error;
@@ -4768,8 +5143,7 @@
         id: 'perfil', icono: '🆔', nombre: 'PERFIL', lema: 'Tu negocio, tu marca, tus datos', subs: [
           { id: 'sec-perfil-datos', icono: '🆔', nombre: 'Mis datos' },
           { id: 'sec-perfil-pagos', icono: '💳', nombre: 'Métodos de pago' },
-          { id: 'sec-perfil-respaldo', icono: '💾', nombre: 'Respaldo de datos' },
-          { id: 'sec-perfil-legal', icono: '📄', nombre: 'Términos y privacidad' }]
+          { id: 'sec-perfil-respaldo', icono: '💾', nombre: 'Respaldo de datos' }]
       },
       {
         id: 'clientes', icono: '💼', nombre: 'CLIENTES', lema: 'Tu cartera de clientes, siempre a la mano', subs: [
@@ -4784,7 +5158,8 @@
       {
         id: 'presupuestos', icono: '📝', nombre: 'PRESUPUESTOS', lema: 'Cotiza rápido y cierra más trabajos', subs: [
           { id: 'sec-presupuestos', icono: '📝', nombre: 'Nuevo presupuesto' },
-          { id: 'sec-historial', icono: '🖨️', nombre: 'Reimprimir presupuesto' }]
+          { id: 'sec-historial', icono: '🖨️', nombre: 'Reimprimir presupuesto' },
+          { id: 'sec-plantilla', icono: '🎨', nombre: 'Diseño del presupuesto' }]
       },
       {
         id: 'finanzas', icono: '💰', nombre: 'FINANZAS', lema: 'Cuentas claras, negocio sólido', subs: [
@@ -4885,6 +5260,7 @@
       $('cabSub').textContent = sub.nombre; $('cabLema').textContent = g.lema;
       window.scrollTo(0, 0); document.querySelector('.main-content').scrollTop = 0;
       if (id === 'sec-historial') cargarHistorial();
+      if (id === 'sec-plantilla') plCargar();
       if (id === 'sec-lista-clientes') cargarListaClientes();
       if (id.startsWith('sec-agenda-')) cargarAgenda();
       if (id.startsWith('sec-fin-')) cargarFinanzas();
@@ -4922,15 +5298,18 @@
       if (datos.email) miCorreo = datos.email;
       if (datos.config) aplicarConfigApp(datos.config, true);
       if (datos.scripts) scriptsCobro = datos.scripts;
+      correoObligatorio = !!datos.correoObligatorio;
       if (datos.perfil) aplicarPerfil(datos.perfil, !!primera);
+      if (datos.plantilla) { plAplicar(datos.plantilla); if (seccionActual === 'sec-plantilla') plPintar(); }
       if (datos.suscripcion) susRender(datos.suscripcion);
       dibujarScriptsCobro();
       if (primera) {
         activarMenuAdmin(!!datos.isAdmin);
+        if (datos.perfil && datos.perfil.terminos === false) aceptarTerminosInicial();   // aún no acepta las condiciones vigentes
         if (!perfil.marca && !perfil.nombre) {   // primera vez: lleva a completar el perfil
           cambiarSeccion('sec-perfil-datos');
           setTimeout(() => aviso('Completa tu perfil: nombre, ícono y datos para tus presupuestos', 'info'), 900);
-        }
+        } else recordarConectarCorreo();
       }
     }
 
@@ -5027,6 +5406,7 @@
       bloque.hidden = !abrir;
       btn.className = abrir ? 'btn-red' : 'btn-blue';
       btn.textContent = abrir ? BLOQUES[k].quitar : BLOQUES[k].crear;
+      if (abrir && !$('texto-' + k).value.trim() && plGuardada) $('texto-' + k).value = (k === 'nota' ? plGuardada.notaDefecto : plGuardada.obsDefecto) || '';   // texto habitual del diseño
       if (abrir && !silencioso) $('texto-' + k).focus();
     }
 
@@ -5112,6 +5492,7 @@
 
     async function enviarPresupuestoCorreo() {
       if (!validar()) return;
+      if (!await exigirCorreoPropio()) return;
       const correo = $('correoCliente').value.trim();
       if (!correo) return alertaBonita('Falta el correo', 'Ingresa el correo del cliente.', 'warning');
       try {
@@ -5275,6 +5656,7 @@
     // Envía por correo un presupuesto ya guardado. El correo sale prellenado con el del cliente
     // (si lo tenía) y se puede corregir o escribir antes de enviar.
     async function enviarHistorialCorreo(btn, numero) {
+      if (!await exigirCorreoPropio()) return;
       try {
         const d = await conCarga(btn, '...', () => api('detalle', { numero }));
         const r = await Swal.fire({
@@ -6205,6 +6587,7 @@
         if (perfil.vigencia !== '') $('vigenciaDoc').value = perfil.vigencia;
       }
       dibujarPerfil();
+      if (typeof plVista === 'function') plVista();   // la vista previa del diseño usa tus datos del perfil
     }
 
     // Los métodos que anotas en tu perfil son los que aparecen en «Método de pago» (más efectivo y «Otro»)
@@ -6435,13 +6818,6 @@
       $('susWhatsApp').href = 'https://wa.me/' + SOPORTE_WA + '?text=' + encodeURIComponent('Hola, quiero renovar o consultar mi suscripción de ' + marcaActual() + (miCorreo ? ' (' + miCorreo + ')' : '') + '.');
     }
     async function cargarSuscripcion() { try { susRender(await api('miSuscripcion')); } catch (e) { alertaBonita('No se pudo cargar', mensajeError(e), 'error'); } }
-
-    // =====================================================================
-    //  TÉRMINOS Y PRIVACIDAD: páginas propias (/terminos y /privacidad). Para cambiar los textos edita terminos.html y privacidad.html
-    // =====================================================================
-    function verLegal(cual) {
-      window.open(cual === 'privacidad' ? '/privacidad' : '/terminos', '_blank', 'noopener');
-    }
 
     // =====================================================================
     //  RESPALDO DE DATOS (Excel para revisar · JSON completo para guardar tal cual)
@@ -6924,127 +7300,116 @@
     }
 
     // =====================================================================
-    //  GMAIL PROPIO: el cliente envía sus correos desde SU cuenta de Google (sin contraseñas)
-    //  El permiso lo da el propio cliente en una ventana de Google; el navegador envía con la API de Gmail.
+    //  CORREO PROPIO: cada usuario envía desde SU Gmail con una «contraseña de aplicación» de Google.
+    //  Se comprueba en el servidor y se guarda cifrada; el navegador nunca la vuelve a ver.
+    //  Es obligatorio para todos los usuarios (el administrador principal puede usar el correo del sistema).
     // =====================================================================
-    let gmailToken = { valor: '', expira: 0 };
-    const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.send';
-    const gmailConectado = () => !!(perfil.gmail && GOOGLE_CLIENT_ID);
+    let correoObligatorio = false;
+    const MSG_CONECTAR_CORREO = 'Para enviar correos a tus clientes primero conecta tu Gmail en Finanzas > Scripts de cobro.';
+    const gmailConectado = () => !!perfil.gmail;
+    const correoFalta = () => correoObligatorio && !perfil.gmail;
 
-    function pedirTokenGmail(prompt) {
-      return new Promise((resolve, reject) => {
-        if (!GOOGLE_CLIENT_ID) return reject(new Error('La conexión con Google todavía no está activada. El administrador debe pegar el ID de cliente en Panel de administrador → Ajustes de la App.'));
-        if (!(window.google && google.accounts && google.accounts.oauth2)) return reject(new Error('No se pudo cargar el servicio de Google. Revisa tu conexión e intenta de nuevo.'));
-        const cliente = google.accounts.oauth2.initTokenClient({
-          client_id: GOOGLE_CLIENT_ID, scope: GMAIL_SCOPE + ' https://www.googleapis.com/auth/userinfo.email', prompt: prompt,
-          callback: r => {
-            if (r.error) return reject(new Error(r.error === 'access_denied' ? 'No diste el permiso para enviar correos.' : 'Google respondió: ' + (r.error_description || r.error)));
-            if (!google.accounts.oauth2.hasGrantedAllScopes(r, GMAIL_SCOPE)) return reject(new Error('Falta marcar el permiso «Enviar correos» en la ventana de Google.'));
-            gmailToken = { valor: r.access_token, expira: Date.now() + (Number(r.expires_in || 3600) - 60) * 1000 };
-            resolve(r.access_token);
-          },
-          error_callback: e => reject(new Error(e && e.type === 'popup_closed' ? 'Cerraste la ventana de Google antes de terminar.' : 'No se pudo abrir la ventana de Google (permite las ventanas emergentes del navegador).'))
-        });
-        cliente.requestAccessToken();
-      });
+    function irAConectarCorreo() {
+      cambiarSeccion('sec-fin-scripts');
+      setTimeout(() => { const el = $('gmailClaveIn'); if (el) el.focus(); }, 350);
     }
-    const tokenGmail = () => (gmailToken.valor && Date.now() < gmailToken.expira) ? Promise.resolve(gmailToken.valor) : pedirTokenGmail('');
+
+    // Antes de enviar un correo: si falta conectar el Gmail, explica y lleva a la pantalla de conexión
+    async function exigirCorreoPropio() {
+      if (!correoFalta()) return true;
+      const r = await Swal.fire({
+        title: 'Conecta tu correo primero', icon: 'info', showCancelButton: true,
+        text: 'Para enviar correos a tus clientes necesitas conectar tu Gmail. Los mensajes saldrán desde tu propia cuenta. Toma 2 minutos.',
+        confirmButtonText: 'Conectar ahora', cancelButtonText: 'Más tarde', background: '#1a2332', color: '#e2e8f0', confirmButtonColor: '#0284c7'
+      });
+      if (r.isConfirmed) irAConectarCorreo();
+      return false;
+    }
 
     async function conectarGmail() {
+      const correo = $('gmailCorreoIn').value.trim(), clave = $('gmailClaveIn').value.trim();
+      if (!emailValido(correo)) return alertaBonita('Falta tu correo', 'Escribe tu correo de Gmail completo.', 'warning');
+      if (clave.replace(/\s/g, '').length !== 16) return alertaBonita('Falta la contraseña de aplicación', 'Pega la clave de 16 letras que te dio Google en el paso 1 (no es tu contraseña normal).', 'warning');
       try {
-        const tok = await pedirTokenGmail('consent');
-        const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + tok } });
-        const u = await r.json();
-        if (!u || !emailValido(u.email)) throw new Error('Google no entregó el correo de la cuenta. Intenta de nuevo.');
-        const res = await api('guardarGmail', { correo: u.email });
-        perfil.gmail = res.gmail; dibujarGmail();
-        aviso('Gmail conectado: ' + res.gmail);
+        const res = await conCarga($('btnGmailConectar'), 'Comprobando con Google...', () => api('conectarCorreo', { correo, clave }));
+        perfil.gmail = res.gmail; $('gmailClaveIn').value = ''; dibujarGmail();
+        alertaBonita('¡Gmail conectado!', 'Desde ahora tus correos a clientes salen de ' + res.gmail + '.', 'success');
       } catch (e) { alertaBonita('No se pudo conectar', mensajeError(e), 'error'); }
     }
+
     async function desconectarGmail() {
-      if (!await confirmar('¿Desconectar tu Gmail?', 'Tus correos volverán a salir desde el correo del sistema (con límite diario).', 'Sí, desconectar')) return;
+      const aviso2 = correoObligatorio ? 'Sin Gmail conectado no podrás enviar correos a tus clientes hasta volver a conectarlo.' : 'Tus correos volverán a salir desde el correo del sistema.';
+      if (!await confirmar('¿Desconectar tu Gmail?', aviso2, 'Sí, desconectar')) return;
       try {
-        if (gmailToken.valor && window.google && google.accounts && google.accounts.oauth2) { try { google.accounts.oauth2.revoke(gmailToken.valor, () => { }); } catch (e) { /* ya estaba revocado */ } }
-        gmailToken = { valor: '', expira: 0 };
-        await api('guardarGmail', { correo: '' });
+        await api('desconectarCorreo');
         perfil.gmail = ''; dibujarGmail(); aviso('Gmail desconectado', 'info');
       } catch (e) { alertaBonita('No se pudo desconectar', mensajeError(e), 'error'); }
     }
+
     function dibujarGmail() {
+      const falta = correoFalta();
+      const aviso1 = $('avisoCorreo'); if (aviso1) aviso1.hidden = !(falta && usuarioActual);
       if (!$('gmailEstado')) return;
       let txt;
-      if (!GOOGLE_CLIENT_ID) txt = 'La conexión con Google aún no está activada por el administrador. Mientras tanto, tus correos salen desde el correo del sistema con el nombre de tu negocio; las respuestas llegan a tu correo de contacto.';
-      else if (perfil.gmail) txt = '✅ Tus correos salen desde tu Gmail: ' + perfil.gmail;
-      else txt = 'Ahora tus correos salen desde el correo del sistema (con el nombre de tu negocio; las respuestas llegan a tu correo de contacto). Conecta tu Gmail para que salgan desde tu propia cuenta.';
+      if (perfil.gmail) txt = '✅ Tus correos a clientes salen desde tu Gmail: ' + perfil.gmail;
+      else if (correoObligatorio) txt = '⚠️ Aún no conectas tu correo. Es obligatorio para enviar presupuestos y recordatorios por correo: salen desde TU Gmail, con el nombre de tu negocio.';
+      else txt = 'Como administrador, tus recordatorios salen desde el correo del sistema (esto aplica solo a ti: los demás usuarios nunca usan este correo). Puedes conectar otro Gmail si quieres.';
       $('gmailEstado').textContent = txt;
       $('btnGmailConectar').textContent = perfil.gmail ? '🔄 Cambiar de cuenta' : '🔗 Conectar mi Gmail';
       $('btnGmailQuitar').hidden = !perfil.gmail;
+      if (!$('gmailCorreoIn').value) $('gmailCorreoIn').value = perfil.gmail || miCorreo || '';
     }
 
-    // ---- Correo MIME para la API de Gmail ----
-    function b64Utf8(str) { const bytes = new TextEncoder().encode(str); let bin = ''; bytes.forEach(b => { bin += String.fromCharCode(b); }); return btoa(bin); }
-    const quebrar76 = b64 => b64.replace(/(.{76})/g, '$1\r\n');
-    function construirMime(o) {
-      const limite = 'ai_' + Math.random().toString(36).slice(2);
-      const cab = ['To: ' + o.para, 'Subject: =?UTF-8?B?' + b64Utf8(o.asunto || 'Mensaje') + '?=', 'MIME-Version: 1.0'];
-      const texto = quebrar76(b64Utf8(o.texto || ''));
-      let cuerpo;
-      if (o.adjuntos && o.adjuntos.length) {
-        cab.push('Content-Type: multipart/mixed; boundary="' + limite + '"');
-        cuerpo = ['--' + limite, 'Content-Type: text/plain; charset="UTF-8"', 'Content-Transfer-Encoding: base64', '', texto];
-        o.adjuntos.forEach(a => {
-          const nombre = String(a.nombre || 'archivo').replace(/[^\w.\-]+/g, '_');
-          cuerpo.push('--' + limite, 'Content-Type: ' + a.mime + '; name="' + nombre + '"', 'Content-Disposition: attachment; filename="' + nombre + '"', 'Content-Transfer-Encoding: base64', '', quebrar76(a.base64));
-        });
-        cuerpo.push('--' + limite + '--', '');
-      } else {
-        cab.push('Content-Type: text/plain; charset="UTF-8"', 'Content-Transfer-Encoding: base64');
-        cuerpo = [texto];
-      }
-      return btoa(cab.join('\r\n') + '\r\n\r\n' + cuerpo.join('\r\n')).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    }
-    async function enviarPorGmail(o, reintento) {
-      if (!emailValido(o.para)) throw new Error('El correo de destino no es válido.');
-      const token = await tokenGmail();
-      const r = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
-        method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ raw: construirMime(o) })
-      });
-      if (r.status === 401 && !reintento) { gmailToken = { valor: '', expira: 0 }; return enviarPorGmail(o, true); }
-      if (!r.ok) {
-        let msg = ''; try { msg = (await r.json()).error.message; } catch (e) { /* sin detalle */ }
-        throw new Error(r.status === 403 ? 'Google no permitió enviar desde esta cuenta (' + (msg || 'permiso denegado') + ').' : 'Gmail respondió con error ' + r.status + (msg ? ': ' + msg : '') + '.');
-      }
+    // Una vez por sesión, tras entrar: si falta el correo, se invita a conectarlo (además del aviso fijo)
+    function recordarConectarCorreo() {
+      if (!correoFalta() || sessionStorage.getItem('ai_aviso_correo')) return;
+      setTimeout(() => {
+        if (!correoFalta() || Swal.isVisible()) return;
+        try { sessionStorage.setItem('ai_aviso_correo', '1'); } catch (e) { /* sin almacenamiento */ }
+        exigirCorreoPropio();
+      }, 1500);
     }
 
-    // Envía un correo de texto: desde el Gmail del cliente si lo conectó; si no (o si falla y él acepta), desde el sistema
-    async function enviarCorreoInteligente(o) {
-      if (gmailConectado()) {
-        try { await enviarPorGmail(o); return 'gmail'; }
-        catch (e) {
-          if (!await confirmar('No se pudo enviar desde tu Gmail', mensajeError(e) + ' ¿Quieres enviarlo desde el correo del sistema?', 'Sí, enviar así')) throw new Error('Envío cancelado.');
+    // =====================================================================
+    //  CONDICIONES DEL SERVICIO: todos las aceptan una vez (queda registrada la fecha)
+    // =====================================================================
+    async function aceptarTerminosInicial() {
+      try {   // si marcó la casilla al crear su cuenta, solo se deja constancia
+        if (localStorage.getItem('ai_acepto_pend') === String(miCorreo || '').toLowerCase()) {
+          await api('aceptarTerminos'); localStorage.removeItem('ai_acepto_pend');
+          return recordarConectarCorreo();
         }
-      }
-      await api('enviarRecordatorio', { datos: { para: o.para, asunto: o.asunto, mensaje: o.texto } });
-      return 'sistema';
+      } catch (e) { /* si no se pudo, se pide aceptar abajo */ }
+      const r = await Swal.fire({
+        title: 'Condiciones del servicio', icon: 'info', background: '#1a2332', color: '#e2e8f0', confirmButtonColor: '#0284c7',
+        html: '<p style="font-size:14px">Para usar Ayudante Integral debes aceptar las <a href="/terminos.html" target="_blank" rel="noopener" style="color:#7dd3fc">Condiciones del servicio</a> y la <a href="/privacidad.html" target="_blank" rel="noopener" style="color:#7dd3fc">Política de privacidad</a>.</p>',
+        input: 'checkbox', inputPlaceholder: 'He leído y acepto ambos documentos',
+        inputValidator: v => v ? undefined : 'Marca la casilla para continuar.',
+        confirmButtonText: 'Aceptar y continuar', showCancelButton: true, cancelButtonText: 'Salir',
+        allowOutsideClick: false, allowEscapeKey: false, showLoaderOnConfirm: true,
+        preConfirm: async () => { try { await api('aceptarTerminos'); } catch (e) { Swal.showValidationMessage(mensajeError(e)); return false; } }
+      });
+      if (!r.isConfirmed) return cerrarSesion();
+      recordarConectarCorreo();
     }
+
     function cuerpoPresupuesto(d) {
       const p = perfil;
       return 'Estimado/a ' + (d.cliente || 'cliente') + ',\n\nAdjunto a este correo encontrará el presupuesto N° ' + (d.numero || '') + ' solicitado.\n\nQuedamos a su entera disposición para cualquier duda o consulta.\n\nSaludos cordiales,\n\n' +
         marcaActual() + '\n' + (p.especialidad || '') + (p.correo ? '\n' + p.correo : '') + (p.telefonos ? '\n' + p.telefonos : '');
     }
+
+    // El envío lo hace el servidor con la cuenta Gmail del usuario (y vuelve a comprobar que la tiene)
+    async function enviarCorreoInteligente(o) {
+      if (correoFalta()) throw new Error(MSG_CONECTAR_CORREO);
+      await api('enviarRecordatorio', { datos: { para: o.para, asunto: o.asunto, mensaje: o.texto } });
+      return 'correo';
+    }
     // Presupuesto con su PDF adjunto
     async function enviarPresupuestoPorEmail(datos, correo) {
-      if (gmailConectado()) {
-        try {
-          const pdf = await api('generarPdf', { datos });
-          await enviarPorGmail({ para: correo, asunto: 'Presupuesto N° ' + (datos.numero || '') + ' - ' + marcaActual(), texto: cuerpoPresupuesto(datos), adjuntos: [{ nombre: pdf.nombre, mime: 'application/pdf', base64: pdf.base64 }] });
-          return 'gmail';
-        } catch (e) {
-          if (!await confirmar('No se pudo enviar desde tu Gmail', mensajeError(e) + ' ¿Quieres enviarlo desde el correo del sistema?', 'Sí, enviar así')) throw new Error('Envío cancelado.');
-        }
-      }
+      if (correoFalta()) throw new Error(MSG_CONECTAR_CORREO);
       await api('enviarCorreo', { datos, correo });
-      return 'sistema';
+      return 'correo';
     }
 
     // =====================================================================
@@ -7084,6 +7449,7 @@
             const para = $('recCorreo').value.trim();
             if (!emailValido(para)) return aviso('Escribe un correo válido', 'warning');
             if (!msg()) return aviso('El mensaje está vacío', 'warning');
+            if (correoFalta()) return aviso('Primero conecta tu Gmail en Finanzas > Scripts de cobro', 'warning');
             const btn = $('recMail');
             try {
               await conCarga(btn, 'Enviando...', () => enviarCorreoInteligente({ para, asunto: op.asunto || ('Recordatorio · ' + marcaActual()), texto: msg() }));
@@ -7170,6 +7536,269 @@
         }
       }
     })();
+    // =====================================================================
+    //  PRESUPUESTOS · DISEÑO DE LA HOJA
+    //  Cada cliente configura cómo se ve su presupuesto (colores, encabezado, sello, marca de agua, pie).
+    //  El servidor guarda la plantilla y el PDF la usa; aquí se edita con una vista previa en vivo.
+    // =====================================================================
+    let plEdit = null;          // diseño que se está editando (borrador)
+    let plGuardada = null;      // diseño guardado en el servidor
+    let plEstilos = {};         // estilos listos para elegir (vienen del servidor)
+    let plCargada = false;
+    let plImgTipo = '';
+    const plClonar = o => JSON.parse(JSON.stringify(o));
+    const plGet = ruta => ruta.split('.').reduce((o, k) => (o == null ? o : o[k]), plEdit);
+
+    function plAplicar(r) {
+      plGuardada = r.plantilla;
+      if (r.estilos) plEstilos = r.estilos;
+      plEdit = plClonar(r.plantilla);
+      plCargada = true;
+    }
+
+    async function plCargar() {
+      if (!plCargada) {
+        try { plAplicar(await api('plantilla')); }
+        catch (e) { return alertaBonita('No se pudo cargar el diseño', mensajeError(e), 'error'); }
+      }
+      plPintar();
+    }
+
+    function plSet(ruta, valor) {
+      const p = ruta.split('.'); let o = plEdit;
+      for (let i = 0; i < p.length - 1; i++) o = o[p[i]];
+      o[p[p.length - 1]] = valor;
+      if (ruta.startsWith('colores.')) plEdit.estilo = 'personalizado';
+      plPintarEstado(); plVista();
+    }
+
+    function plElegirEstilo(k) {
+      if (!plEstilos[k]) return;
+      plEdit.estilo = k; plEdit.colores = plClonar(plEstilos[k].colores);
+      plPintar();
+    }
+
+    // Rellena todos los controles con el diseño actual (al abrir la pestaña o al cambiar de estilo)
+    function plPintar() {
+      if (!plEdit) return;
+      document.querySelectorAll('#sec-plantilla [data-pl]').forEach(el => {
+        const v = plGet(el.dataset.pl);
+        if (el.type === 'checkbox') el.checked = !!v; else el.value = v == null ? '' : v;
+      });
+      plPintarEstado(); plVista();
+    }
+
+    // Partes de la pantalla que dependen del diseño: estilos, miniaturas, cajas visibles y avisos
+    function plPintarEstado() {
+      if (!plEdit) return;
+      $('plEstilos').innerHTML = Object.keys(plEstilos).map(k => {
+        const e = plEstilos[k], c = e.colores;
+        return `<button type="button" class="pl-chip ${plEdit.estilo === k ? 'activo' : ''}" onclick="plElegirEstilo('${k}')">
+          <span class="pl-sw">${[c.encabezadoTabla, c.tituloPie, c.filas, c.total].map(h => `<i style="background:${h}"></i>`).join('')}</span>${esc(e.nombre)}</button>`;
+      }).join('');
+      document.querySelectorAll('#sec-plantilla [data-pl]').forEach(el => {
+        const o = el.nextElementSibling;
+        if (o && o.tagName === 'OUTPUT') o.textContent = el.value + (el.dataset.pl === 'sello.tam' ? ' pt' : ' %');
+      });
+      const imgs = [
+        [plEdit.encabezado.bannerId, 'plImgBanner', 'plBtnBanner', 'plQuitarBanner', '🖼️ Subir banner', '🖼️ Cambiar banner'],
+        [plEdit.sello.id, 'plImgSello', 'plBtnSello', 'plQuitarSello', '📷 Subir sello', '📷 Cambiar sello'],
+        [plEdit.marcaAgua.id, 'plImgMarca', 'plBtnMarca', 'plQuitarMarca', '📷 Subir marca de agua', '📷 Cambiar marca de agua']
+      ];
+      imgs.forEach(([id, im, btn, quitar, subir, cambiar]) => {
+        $(im).hidden = !id; if (id) $(im).src = srcPerfil(id);
+        $(btn).textContent = id ? cambiar : subir; $(quitar).hidden = !id;
+      });
+      $('plBoxBanner').hidden = plEdit.encabezado.modo !== 'banner';
+      $('plBoxTextos').hidden = plEdit.encabezado.modo === 'banner';
+      $('plBoxSello').hidden = !plEdit.sello.id;
+      $('plBoxMarca').hidden = !plEdit.marcaAgua.id;
+      const sucio = JSON.stringify(plEdit) !== JSON.stringify(plGuardada);
+      $('plPendiente').textContent = sucio ? '● Tienes cambios sin guardar' : '';
+    }
+
+    // ---------- Vista previa (la hoja se dibuja a tamaño carta y se reduce para caber) ----------
+    function plEscala() {
+      const caja = $('plCaja'), hoja = $('plHoja');
+      if (!caja || !hoja || !caja.clientWidth) return;
+      const k = caja.clientWidth / 612;
+      hoja.style.transform = 'scale(' + k + ')';
+      caja.style.height = (792 * k) + 'px';
+    }
+
+    function plVista() {
+      const hoja = $('plHoja'); if (!hoja || !plEdit) return;
+      const t = plEdit, c = t.colores, E = t.encabezado, P = t.pie, M = 28.8, W = 612 - 2 * M;
+      const lum = h => { const n = parseInt(h.slice(1), 16), l = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; return .2126 * l((n >> 16) & 255) + .7152 * l((n >> 8) & 255) + .0722 * l(n & 255); };
+      const tinta = h => lum(h) > .179 ? '#000' : '#fff';                       // mismo criterio que el PDF
+      const fondo = h => String(h).toLowerCase() === '#ffffff' ? 'transparent' : h;
+      const B = '0.8px solid ' + c.bordes;
+      const n2 = n => Number(n).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const emp = {
+        marca: perfil.marca || perfil.nombre || MARCA_DEFECTO, especialidad: perfil.especialidad || 'Tu especialidad o servicio',
+        rif: perfil.rif || 'V-12345678-9', correo: perfil.correo || 'contacto@tunegocio.com',
+        direccion: perfil.direccion || 'Tu dirección completa, ciudad y estado.',
+        telefonos: perfil.telefonos ? (/^tel/i.test(perfil.telefonos) ? perfil.telefonos : 'Teléfonos:  ' + perfil.telefonos) : 'Teléfonos:  0414-1234567 / 0416-7654321'
+      };
+
+      // Encabezado
+      const modo = (E.modo === 'banner' && !E.bannerId) ? 'logo' : E.modo;
+      let cab;
+      if (modo === 'banner') {
+        cab = `<div style="min-height:50px;padding:4px;display:flex;justify-content:center"><img src="${esc(srcPerfil(E.bannerId))}" style="display:block;max-width:100%;max-height:112px;object-fit:contain" alt=""></div>`;
+      } else {
+        const logo = modo === 'logo' && perfil.logoId ? srcPerfil(perfil.logoId) : '';
+        const ls = [];
+        if (E.marca) ls.push([emp.marca, 16, 'bold']);
+        if (E.especialidad) ls.push([emp.especialidad, 10, 'italic']);
+        if (E.rif) ls.push(['RIF / ID: ' + emp.rif, 10, '']);
+        if (E.correo) ls.push([emp.correo, 10, '']);
+        cab = `<div style="height:92px;display:flex;align-items:center">
+          ${logo ? `<div style="width:27.5%;height:100%;padding:4px;display:flex;align-items:center;justify-content:center"><img src="${esc(logo)}" style="max-width:100%;max-height:100%;object-fit:contain" alt=""></div>` : ''}
+          <div style="flex:1;text-align:center;padding:0 4px">${ls.map(l => `<div style="font-size:${l[1]}px;font-weight:${l[2] === 'bold' ? 'bold' : 'normal'};font-style:${l[2] === 'italic' ? 'italic' : 'normal'};margin:2px 0">${esc(l[0])}</div>`).join('')}</div></div>`;
+      }
+
+      // Tabla de artículos de ejemplo
+      const cols = 'display:grid;grid-template-columns:50% 13% 18.5% 18.5%';
+      const items = [['Mantenimiento preventivo de equipo split 12.000 BTU', 2, 35], ['Material e instalación (incluye garantía)', 1, 60], ['Repuesto de ejemplo', 3, 12.5]];
+      const sub = items.reduce((s, i) => s + i[1] * i[2], 0), iva = sub * .16, total = sub + iva;
+      const th = `<div style="${cols}">${['DESCRIPCION', 'CANTIDAD', 'PRECIO UNITARIO', 'SUBTOTAL'].map(s => `<div class="pl-c cen plb" style="height:18px;background:${fondo(c.encabezadoTabla)};color:${tinta(c.encabezadoTabla)};border:${B}">${s}</div>`).join('')}</div>`;
+      const filas = items.map(f => `<div style="${cols}"><div class="pl-c" style="border:${B}">${esc(f[0])}</div><div class="pl-c cen" style="border:${B}">${f[1]}</div><div class="pl-c cen" style="border:${B}">$${n2(f[2])}</div><div class="pl-c cen" style="border:${B}">$${n2(f[1] * f[2])}</div></div>`).join('');
+      const bloque = (tit, txt) => txt ? `<div style="margin-top:17px"><div class="pl-c cen plb" style="border:${B}">${tit}</div><div style="border:${B};border-top:0;padding:5px 4px;min-height:34px;white-space:pre-wrap">${esc(txt)}</div></div>` : '';
+
+      // Recuadro final
+      const izq = ['CLIENTE:  Cliente de ejemplo', 'TELÉFONO / RIF:  0414-0000000', 'Nº PRESUPUESTO:  00001', 'FECHA:  ' + new Date().toLocaleDateString('es-VE')];
+      if (P.vigencia) izq.push('VIGENCIA:  15 Días');
+      const der = [['SUB TOTAL', '$' + n2(sub)], ['IVA (16%)', '$' + n2(iva)], ['TOTAL PRESUPUESTO', '$' + n2(total), 1]];
+      if (P.bs) der.push(['TASA BCV', 'Bs' + n2(40)], ['TOTAL EN BS', 'Bs' + n2(total * 40), 1]);
+      const nF = Math.max(izq.length, der.length);
+      const dirs = [P.direccion ? emp.direccion : '', P.telefonos ? emp.telefonos : ''].filter(Boolean);
+      const hPie = (1 + nF) * 16 + dirs.length * 18;
+      const cel = (txt, bg, extra) => `<div class="pl-c plb" style="height:16px;min-height:16px;background:${fondo(bg)};color:${tinta(bg)};border:${B};${extra || ''}">${esc(txt)}</div>`;
+      const vacia = extra => `<div style="height:16px;border:${B};${extra || ''}"></div>`;
+      let pie = `<div style="display:grid;grid-template-columns:50% 31.5% 18.5%">`;
+      pie += cel('DATOS DEL CLIENTE', c.tituloPie, 'justify-content:center') + cel('RESUMEN', c.tituloPie, 'grid-column:span 2;justify-content:center');
+      for (let i = 0; i < nF; i++) {
+        pie += i < izq.length ? cel(izq[i], c.filas) : vacia();
+        if (i < der.length) { const bgc = der[i][2] ? c.total : c.filas; pie += cel(der[i][0], bgc, 'justify-content:flex-end') + cel(der[i][1], bgc, 'justify-content:center'); }
+        else pie += vacia('grid-column:span 2');
+      }
+      pie += '</div>';
+      if (dirs.length) pie += `<div style="border:1.5px solid ${c.bordes}">${dirs.map(s => `<div style="height:18px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:11px;color:${c.direccion};white-space:nowrap;overflow:hidden">${esc(s)}</div>`).join('')}</div>`;
+
+      // Sello y marca de agua
+      let sello = '';
+      if (t.sello.id) {
+        const tam = t.sello.tam, top = 792 - M - hPie, cy = top + (hPie - dirs.length * 18) / 2;
+        const cx = t.sello.posicion === 'izquierda' ? M + tam / 2 + 6 : t.sello.posicion === 'derecha' ? 612 - M - tam / 2 - 6 : M + W * .5;
+        sello = `<img class="pl-hoja-sello" src="${esc(srcPerfil(t.sello.id))}" style="width:${tam}px;height:${tam}px;left:${cx - tam / 2}px;top:${cy - tam / 2}px" alt="">`;
+      }
+      const marca = t.marcaAgua.id ? `<img class="pl-hoja-marca" src="${esc(srcPerfil(t.marcaAgua.id))}" style="width:${612 * t.marcaAgua.tam / 100}px;opacity:${t.marcaAgua.opacidad / 100};object-fit:contain" alt="">` : '';
+
+      hoja.innerHTML = marca +
+        `<div style="position:absolute;inset:0;padding:${M}px">
+          <div style="border-bottom:1.5px solid ${c.bordes}">${cab}</div>
+          <div style="text-align:center;font-weight:bold;font-size:14px;margin:10px 0 16px">${esc(t.titulo || 'PRESUPUESTO')} 00001</div>
+          ${th}${filas}${bloque('NOTA', t.notaDefecto)}${bloque('OBSERVACIÓN', t.obsDefecto)}
+        </div>
+        <div style="position:absolute;left:${M}px;right:${M}px;bottom:${M}px">${pie}</div>` + sello;
+      plEscala();
+    }
+
+    // ---------- Imágenes: banner, sello y marca de agua ----------
+    // El sello y la marca de agua conservan su transparencia (PNG); el banner se reduce como JPG
+    function plComprimirPng(file, maxLado) {
+      return new Promise((resolve, reject) => {
+        if (!/^image\//.test(file.type)) return reject(new Error('Elige un archivo de imagen.'));
+        const url = URL.createObjectURL(file), im = new Image();
+        im.onload = () => {
+          URL.revokeObjectURL(url);
+          let lado = maxLado;
+          for (let i = 0; i < 8; i++) {
+            const k = Math.min(1, lado / Math.max(im.width, im.height));
+            const w = Math.max(1, Math.round(im.width * k)), h = Math.max(1, Math.round(im.height * k));
+            const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+            cv.getContext('2d').drawImage(im, 0, 0, w, h);
+            const data = cv.toDataURL('image/png');
+            if (data.length * 0.75 <= 200 * 1024) return resolve({ mime: 'image/png', base64: data.split(',')[1] });
+            lado = Math.round(lado * 0.8);
+          }
+          reject(new Error('La imagen es muy pesada. Prueba con una más simple o más pequeña.'));
+        };
+        im.onerror = () => { URL.revokeObjectURL(url); reject(new Error('No se pudo leer la imagen.')); };
+        im.src = url;
+      });
+    }
+
+    async function plSubir(file, tipo) {
+      let img;
+      if (tipo === 'banner') {
+        let ultimo;
+        for (const lado of [1400, 1000, 700]) { try { img = await comprimirImagen(file, lado, 0.9); break; } catch (e) { ultimo = e; } }
+        if (!img) throw ultimo;
+      } else img = await plComprimirPng(file, tipo === 'marca' ? 800 : 480);
+      const r = await api('subirImagen', { imagen: { tipo, mime: img.mime, base64: img.base64 } });
+      imgLocal[r.id] = 'data:' + img.mime + ';base64,' + img.base64;
+      return r.id;
+    }
+
+    function plElegirImagen(tipo) { plImgTipo = tipo; $('plArchivo').click(); }
+
+    function plAsignarImagen(tipo, id) {
+      if (tipo === 'banner') { plEdit.encabezado.bannerId = id; if (id) plEdit.encabezado.modo = 'banner'; $('plModo').value = plEdit.encabezado.modo; }
+      else if (tipo === 'sello') { plEdit.sello.id = id; plEdit.sello.activo = !!id; }
+      else { plEdit.marcaAgua.id = id; plEdit.marcaAgua.activa = !!id; }
+      plPintarEstado(); plVista();
+    }
+
+    async function plSubirImagen(inp) {
+      const f = inp.files && inp.files[0]; inp.value = '';
+      if (!f || !plEdit) return;
+      const tipo = plImgTipo;
+      aviso('Subiendo imagen…', 'info');
+      try { plAsignarImagen(tipo, await plSubir(f, tipo)); aviso('Imagen lista. Pulsa «Guardar diseño» para aplicarla.', 'info'); }
+      catch (e) { alertaBonita('No se pudo subir', mensajeError(e), 'error'); }
+    }
+
+    function plQuitarImagen(tipo) { plAsignarImagen(tipo, ''); }
+
+    // ---------- Guardar, probar y restablecer ----------
+    function plRecolectar() {
+      const t = plClonar(plEdit);
+      if (t.encabezado.modo === 'banner' && !t.encabezado.bannerId) t.encabezado.modo = 'logo';
+      return t;
+    }
+
+    async function plGuardar() {
+      try {
+        const r = await conCarga($('btn-plantilla'), 'Guardando...', () => api('guardarPlantilla', { plantilla: plRecolectar() }));
+        plAplicar(r); plPintar();
+        aviso('Diseño guardado');
+      } catch (e) { alertaBonita('No se pudo guardar', mensajeError(e), 'error'); }
+    }
+
+    async function plPrueba() {
+      try {
+        const res = await conCarga($('btn-plprueba'), 'Generando...', () => api('pdfPrueba', { plantilla: plRecolectar() }));
+        mostrarPdf(res, '👁️ PDF de prueba');
+      } catch (e) { alertaBonita('No se pudo generar', mensajeError(e), 'error'); }
+    }
+
+    async function plRestablecer() {
+      if (!await confirmar('¿Volver al diseño por defecto?', 'Se quitan tu sello, marca de agua y encabezado propio, y se vuelve al estilo sencillo. Se guarda de inmediato.', 'Sí, restablecer', '#dc2626')) return;
+      try { plAplicar(await api('restablecerPlantilla')); plPintar(); aviso('Diseño por defecto aplicado'); }
+      catch (e) { alertaBonita('No se pudo restablecer', mensajeError(e), 'error'); }
+    }
+
+    // Cualquier control con data-pl actualiza el diseño en vivo
+    ['input', 'change'].forEach(ev => $('sec-plantilla').addEventListener(ev, e => {
+      const el = e.target;
+      if (!plEdit || !el.dataset || !el.dataset.pl) return;
+      const v = el.type === 'checkbox' ? el.checked : (el.type === 'range' || el.type === 'number') ? Number(el.value) : el.value;
+      plSet(el.dataset.pl, v);
+    }));
+    if (window.ResizeObserver) new ResizeObserver(plEscala).observe($('plCaja'));
+
   </script>
 </body>
 
