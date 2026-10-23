@@ -66,7 +66,9 @@ const acciones = {
   guardarScriptsCobro: (p, c) => PF.guardarScriptsCobro(c, p.scripts),
   marcarRecordatorio:  (p, c) => T.marcarRecordatorioCobro(c, p.id, p.etapa, p.canal),
   enviarRecordatorio:  (p, c) => PF.enviarRecordatorioCorreo(c, p.datos || {}),
-  guardarGmail:        (p, c) => PF.guardarGmailConectado(c, p.correo),
+  conectarCorreo:      (p, c) => PF.conectarCorreoGmail(c, p.correo, p.clave),
+  desconectarCorreo:   (p, c) => PF.desconectarCorreoGmail(c),
+  aceptarTerminos:     (p, c) => PF.aceptarTerminosUsuario(c),
 
   // --- Diseño (plantilla) del presupuesto ---
   plantilla:           (p, c) => PL.obtenerPlantilla(c),
@@ -112,6 +114,7 @@ async function arranqueCompleto_(c) {
   ]);
   Object.assign(base, {
     perfil, suscripcion, scripts, config, plantilla,
+    correoObligatorio: !c.esSuper,   // todos menos el súper administrador deben conectar su propio Gmail para enviar correos
     isAdmin: c.env.esSuper || c.env.rol === 'Administrador', isSuperAdmin: c.env.esSuper, email: c.email
   });
   // Si el nombre o la especialidad del perfil cambiaron, se actualiza la lista de usuarios del panel
