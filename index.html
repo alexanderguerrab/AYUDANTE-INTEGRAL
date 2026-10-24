@@ -5305,11 +5305,11 @@
       dibujarScriptsCobro();
       if (primera) {
         activarMenuAdmin(!!datos.isAdmin);
-        if (datos.perfil && datos.perfil.terminos === false) aceptarTerminosInicial();   // aún no acepta las condiciones vigentes
-        if (!perfil.marca && !perfil.nombre) {   // primera vez: lleva a completar el perfil
-          cambiarSeccion('sec-perfil-datos');
-          setTimeout(() => aviso('Completa tu perfil: nombre, ícono y datos para tus presupuestos', 'info'), 900);
-        } else recordarConectarCorreo();
+        if (!perfil.marca && !perfil.nombre) cambiarSeccion('sec-perfil-datos');   // primera vez: lleva a completar el perfil
+        // Si aún no acepta las condiciones vigentes, los avisos de perfil y de correo esperan a que las acepte
+        // (otra ventana encima cerraría la de condiciones y la sesión).
+        if (datos.perfil && datos.perfil.terminos === false) aceptarTerminosInicial();
+        else despuesDeTerminos();
       }
     }
 
@@ -7373,11 +7373,17 @@
     // =====================================================================
     //  CONDICIONES DEL SERVICIO: todos las aceptan una vez (queda registrada la fecha)
     // =====================================================================
+    // Lo que toca después de las condiciones: completar el perfil (primera vez) o invitar a conectar el correo
+    function despuesDeTerminos() {
+      if (!perfil.marca && !perfil.nombre) setTimeout(() => aviso('Completa tu perfil: nombre, ícono y datos para tus presupuestos', 'info'), 900);
+      else recordarConectarCorreo();
+    }
+
     async function aceptarTerminosInicial() {
       try {   // si marcó la casilla al crear su cuenta, solo se deja constancia
         if (localStorage.getItem('ai_acepto_pend') === String(miCorreo || '').toLowerCase()) {
           await api('aceptarTerminos'); localStorage.removeItem('ai_acepto_pend');
-          return recordarConectarCorreo();
+          return despuesDeTerminos();
         }
       } catch (e) { /* si no se pudo, se pide aceptar abajo */ }
       const r = await Swal.fire({
@@ -7389,8 +7395,11 @@
         allowOutsideClick: false, allowEscapeKey: false, showLoaderOnConfirm: true,
         preConfirm: async () => { try { await api('aceptarTerminos'); } catch (e) { Swal.showValidationMessage(mensajeError(e)); return false; } }
       });
-      if (!r.isConfirmed) return cerrarSesion();
-      recordarConectarCorreo();
+      if (r.isConfirmed) return despuesDeTerminos();
+      if (r.dismiss === Swal.DismissReason.cancel) return cerrarSesion();   // pulsó «Salir»
+      // Otra ventana tapó la de condiciones: se vuelve a mostrar, nunca se cierra la sesión por eso
+      const volver = () => { if (Swal.isVisible()) setTimeout(volver, 800); else aceptarTerminosInicial(); };
+      setTimeout(volver, 800);
     }
 
     function cuerpoPresupuesto(d) {
